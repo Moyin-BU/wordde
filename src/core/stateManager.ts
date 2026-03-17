@@ -36,6 +36,8 @@ interface StateManager extends AppState {
   // Recent passages
   recentPassages: string[];
   addToRecent: (reference: string) => void;
+  removeFromRecent: (reference: string) => void;
+  clearAllRecent: () => void;
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
@@ -119,6 +121,15 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const updated = [reference, ...current].slice(0, MAX);
     set({ recentPassages: updated });
     localStorage.setItem('recentPassages', JSON.stringify(updated));
+  },
+  removeFromRecent: (reference: string) => {
+    const updated = get().recentPassages.filter(r => r !== reference);
+    set({ recentPassages: updated });
+    localStorage.setItem('recentPassages', JSON.stringify(updated));
+  },
+  clearAllRecent: () => {
+    set({ recentPassages: [] });
+    localStorage.setItem('recentPassages', JSON.stringify([]));
   },
 
   setSearchQuery: (query) => set({ searchQuery: query }),
