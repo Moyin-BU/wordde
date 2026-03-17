@@ -1,0 +1,111 @@
+// Cross-tab synchronization using BroadcastChannel API
+// Syncs committedPassage from Operator → Projection tab on same machine
+
+import type { Passage } from './types';
+
+const CHANNEL_NAME = 'bible-projection-sync';
+
+export type BlankStyle = 'black' | 'logo' | 'soft' | 'session';
+
+export interface SessionScreen {
+  id: string;
+  title: string;
+  subtitle: string;
+}
+
+export interface BlankSettings {
+  style: BlankStyle;
+  logoUrl: string;
+  softBgUrl: string;
+  sessionScreens: SessionScreen[];
+  activeSessionId: string;
+}
+
+export const DEFAULT_SESSION_SCREENS: SessionScreen[] = [
+  { id: 'prayer', title: 'Prayer Time', subtitle: 'Let us pray together' },
+  { id: 'worship', title: 'Worship', subtitle: 'Let us worship the Lord' },
+  { id: 'offering', title: 'Offering', subtitle: 'Give cheerfully unto the Lord' },
+  { id: 'sermon-end', title: 'End of Sermon', subtitle: '' },
+  { id: 'closing', title: 'Service Closing', subtitle: 'Go in peace' },
+];
+
+export function loadBlankSettings(): BlankSettings {
+  try {
+    const stored = localStorage.getItem('blankSettings');
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return {
+    style: 'black',
+    logoUrl: '',
+    softBgUrl: '',
+    sessionScreens: DEFAULT_SESSION_SCREENS,
+    activeSessionId: 'prayer',
+  };
+}
+
+export function saveBlankSettings(settings: BlankSettings): void {
+  localStorage.setItem('blankSettings', JSON.stringify(settings));
+}
+
+export type BroadcastMessage =
+  | { type: 'COMMIT_PASSAGE'; payload: Passage }
+  | { type: 'CLEAR_PASSAGE' }
+  | { type: 'BLANK_SCREEN'; payload?: BlankSettings }
+  | { type: 'UNBLANK_SCREEN' }
+  | { type: 'REQUEST_STATE' }
+  | { type: 'STATE_RESPONSE'; payload: Passage | null }
+  | { type: 'RELOAD_ASSETS' };
+
+let channel: BroadcastChannel | null = null;
+
+function getChannel(): BroadcastChannel {
+  if (!channel) {
+    channel = new BroadcastChannel(CHANNEL_NAME);
+  }
+  return channel;
+}
+
+/** Broadcast committed passage to all other tabs */
+export function broadcastCommit(passage: Passage): void {
+  getChannel().postMessage({ type: 'COMMIT_PASSAGE', payload: passage } satisfies BroadcastMessage);
+}
+
+/** Broadcast clear to all other tabs */
+export function broadcastClear(): void {
+  getChannel().postMessage({ type: 'CLEAR_PASSAGE' } satisfies BroadcastMessage);
+}
+
+/** Broadcast blank screen to all other tabs */
+export function broadcastBlank(settings?: BlankSettings): void {
+  getChannel().postMessage({ type: 'BLANK_SCREEN', payload: settings } satisfies BroadcastMessage);
+}
+
+/** Broadcast unblank screen to all other tabs */
+export function broadcastUnblank(): void {
+  getChannel().postMessage({ type: 'UNBLANK_SCREEN' } satisfies BroadcastMessage);
+}
+
+/** Request current state from operator tab (used when projection opens) */
+export function requestCurrentState(): void {
+  getChannel().postMessage({ type: 'REQUEST_STATE' } satisfies BroadcastMessage);
+}
+
+/** Respond with current state (called by operator tab) */
+export function broadcastStateResponse(passage: Passage | null): void {
+  getChannel().postMessage({ type: 'STATE_RESPONSE', payload: passage } satisfies BroadcastMessage);
+}
+
+/** Tell projection tab to reload images from IndexedDB */
+export function broadcastReloadAssets(): void {
+  getChannel().postMessage({ type: 'RELOAD_ASSETS' } satisfies BroadcastMessage);
+}
+
+/** Listen for committed passage updates from other tabs */
+export function onBroadcastMessage(callback: (msg: BroadcastMessage) => void): () => void {
+  const ch = getChannel();
+  const handler = (event: MessageEvent<BroadcastMessage>) => {
+    callback(event.data);
+  };
+  ch.addEventListener('message', handler);
+  return () => ch.removeEventListener('message', handler);
+}

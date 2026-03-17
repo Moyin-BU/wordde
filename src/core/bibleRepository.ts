@@ -1,0 +1,371 @@
+// Bible Projection App - Bible Repository
+// Read-only access layer for Bible data
+// Per PRD: BibleRepository is the ONLY module allowed to read Bible JSON files
+
+import JSZip from 'jszip';
+import type { BibleBook, Passage, PassageReference, Verse } from './types';
+
+class BibleRepositoryClass {
+  private books: Map<string, BibleBook> = new Map();
+  private bookNames: string[] = [];
+  private isLoaded: boolean = false;
+  private currentTranslation: string = 'KJV';
+  
+  // Book name normalization map for flexible search
+  private bookAliases: Map<string, string> = new Map();
+  
+  async loadFromZip(zipPath: string): Promise<void> {
+    try {
+      const response = await fetch(zipPath);
+      const zipData = await response.arrayBuffer();
+      const zip = await JSZip.loadAsync(zipData);
+      
+      const bookPromises: Promise<void>[] = [];
+      
+      zip.forEach((relativePath, file) => {
+        if (relativePath.endsWith('.json') && !file.dir) {
+          const promise = file.async('text').then((content) => {
+            try {
+              const bookData: BibleBook = JSON.parse(content);
+              if (bookData.book && bookData.chapters) {
+                this.books.set(bookData.book.toLowerCase(), bookData);
+                this.bookNames.push(bookData.book);
+                this.setupBookAliases(bookData.book);
+              }
+            } catch (e) {
+              console.warn(`Failed to parse ${relativePath}:`, e);
+            }
+          });
+          bookPromises.push(promise);
+        }
+      });
+      
+      await Promise.all(bookPromises);
+      
+      // Sort book names in biblical order
+      this.bookNames = this.sortBooksInOrder(this.bookNames);
+      this.isLoaded = true;
+    } catch (error) {
+      console.error('Failed to load Bible data:', error);
+      throw new Error('Failed to load Bible data');
+    }
+  }
+  
+  private setupBookAliases(bookName: string): void {
+    const lower = bookName.toLowerCase();
+    this.bookAliases.set(lower, bookName);
+    
+    // Common abbreviations
+    const abbreviations: Record<string, string[]> = {
+      'genesis': ['gen', 'ge'],
+      'exodus': ['exod', 'ex'],
+      'leviticus': ['lev', 'le'],
+      'numbers': ['num', 'nu'],
+      'deuteronomy': ['deut', 'dt'],
+      'joshua': ['josh', 'jos'],
+      'judges': ['judg', 'jdg'],
+      'ruth': ['ru'],
+      '1 samuel': ['1sam', '1sa', '1 sam'],
+      '2 samuel': ['2sam', '2sa', '2 sam'],
+      '1 kings': ['1kgs', '1ki', '1 kgs'],
+      '2 kings': ['2kgs', '2ki', '2 kgs'],
+      '1 chronicles': ['1chr', '1ch', '1 chr'],
+      '2 chronicles': ['2chr', '2ch', '2 chr'],
+      'ezra': ['ezr'],
+      'nehemiah': ['neh', 'ne'],
+      'esther': ['est', 'es'],
+      'job': ['jb'],
+      'psalms': ['ps', 'psa', 'psalm'],
+      'proverbs': ['prov', 'pr'],
+      'ecclesiastes': ['eccl', 'ec'],
+      'song of solomon': ['song', 'sos', 'ss'],
+      'isaiah': ['isa', 'is'],
+      'jeremiah': ['jer', 'je'],
+      'lamentations': ['lam', 'la'],
+      'ezekiel': ['ezek', 'eze'],
+      'daniel': ['dan', 'da'],
+      'hosea': ['hos', 'ho'],
+      'joel': ['joe', 'jl'],
+      'amos': ['am'],
+      'obadiah': ['obad', 'ob'],
+      'jonah': ['jon', 'jnh'],
+      'micah': ['mic', 'mi'],
+      'nahum': ['nah', 'na'],
+      'habakkuk': ['hab'],
+      'zephaniah': ['zeph', 'zep'],
+      'haggai': ['hag'],
+      'zechariah': ['zech', 'zec'],
+      'malachi': ['mal'],
+      'matthew': ['matt', 'mt'],
+      'mark': ['mk', 'mar'],
+      'luke': ['lk', 'lu'],
+      'john': ['jn', 'joh'],
+      'acts': ['ac', 'act'],
+      'romans': ['rom', 'ro'],
+      '1 corinthians': ['1cor', '1co', '1 cor'],
+      '2 corinthians': ['2cor', '2co', '2 cor'],
+      'galatians': ['gal', 'ga'],
+      'ephesians': ['eph'],
+      'philippians': ['phil', 'php'],
+      'colossians': ['col'],
+      '1 thessalonians': ['1thess', '1th', '1 thess'],
+      '2 thessalonians': ['2thess', '2th', '2 thess'],
+      '1 timothy': ['1tim', '1ti', '1 tim'],
+      '2 timothy': ['2tim', '2ti', '2 tim'],
+      'titus': ['tit'],
+      'philemon': ['phlm', 'phm'],
+      'hebrews': ['heb'],
+      'james': ['jas', 'jm'],
+      '1 peter': ['1pet', '1pe', '1 pet'],
+      '2 peter': ['2pet', '2pe', '2 pet'],
+      '1 john': ['1jn', '1jo', '1 jn'],
+      '2 john': ['2jn', '2jo', '2 jn'],
+      '3 john': ['3jn', '3jo', '3 jn'],
+      'jude': ['jud'],
+      'revelation': ['rev', 're', 'revelations'],
+    };
+    
+    const aliases = abbreviations[lower];
+    if (aliases) {
+      aliases.forEach(alias => this.bookAliases.set(alias, bookName));
+    }
+  }
+  
+  private sortBooksInOrder(books: string[]): string[] {
+    const biblicalOrder = [
+      'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+      'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+      '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+      'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
+      'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+      'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+      'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+      'Haggai', 'Zechariah', 'Malachi',
+      'Matthew', 'Mark', 'Luke', 'John', 'Acts',
+      'Romans', '1 Corinthians', '2 Corinthians', 'Galatians',
+      'Ephesians', 'Philippians', 'Colossians',
+      '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy',
+      'Titus', 'Philemon', 'Hebrews', 'James',
+      '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
+      'Jude', 'Revelation'
+    ];
+    
+    return books.sort((a, b) => {
+      const indexA = biblicalOrder.findIndex(name => name.toLowerCase() === a.toLowerCase());
+      const indexB = biblicalOrder.findIndex(name => name.toLowerCase() === b.toLowerCase());
+      return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    });
+  }
+  
+  resolveBookName(input: string): string | null {
+    const normalized = input.toLowerCase().trim();
+    return this.bookAliases.get(normalized) || null;
+  }
+  
+  getBook(bookName: string): BibleBook | null {
+    const resolved = this.resolveBookName(bookName);
+    if (!resolved) return null;
+    return this.books.get(resolved.toLowerCase()) || null;
+  }
+  
+  getVerse(bookName: string, chapter: string, verse: string): Verse | null {
+    const book = this.getBook(bookName);
+    if (!book) return null;
+    
+    const chapterData = book.chapters.find(c => c.chapter === chapter);
+    if (!chapterData) return null;
+    
+    return chapterData.verses.find(v => v.verse === verse) || null;
+  }
+  
+  getPassage(reference: PassageReference): Passage | null {
+    const book = this.getBook(reference.book);
+    if (!book) return null;
+    
+    const chapterData = book.chapters.find(c => c.chapter === reference.chapter);
+    if (!chapterData) return null;
+    
+    const startIndex = chapterData.verses.findIndex(v => v.verse === reference.verseStart);
+    if (startIndex === -1) return null;
+    
+    const endVerse = reference.verseEnd || reference.verseStart;
+    const endIndex = chapterData.verses.findIndex(v => v.verse === endVerse);
+    
+    const verses = chapterData.verses.slice(
+      startIndex, 
+      endIndex === -1 ? startIndex + 1 : endIndex + 1
+    );
+    
+    const text = verses.map(v => `${v.verse} ${v.text}`).join(' ');
+    const displayRef = reference.verseEnd && reference.verseEnd !== reference.verseStart
+      ? `${book.book} ${reference.chapter}:${reference.verseStart}-${reference.verseEnd}`
+      : `${book.book} ${reference.chapter}:${reference.verseStart}`;
+    
+    return {
+      reference: { ...reference, book: book.book },
+      displayReference: displayRef,
+      text,
+      verses,
+    };
+  }
+  
+  getAllBooks(): string[] {
+    return [...this.bookNames];
+  }
+  
+  getChapters(bookName: string): string[] {
+    const book = this.getBook(bookName);
+    if (!book) return [];
+    return book.chapters.map(c => c.chapter);
+  }
+  
+  getVerses(bookName: string, chapter: string): Verse[] {
+    const book = this.getBook(bookName);
+    if (!book) return [];
+    
+    const chapterData = book.chapters.find(c => c.chapter === chapter);
+    return chapterData?.verses || [];
+  }
+  
+  getVerseCount(bookName: string, chapter: string): number {
+    return this.getVerses(bookName, chapter).length;
+  }
+  
+  getChapterCount(bookName: string): number {
+    const book = this.getBook(bookName);
+    if (!book) return 0;
+    return book.chapters.length;
+  }
+  
+  getNextVerse(bookName: string, chapter: string, verse: string): { book: string; chapter: string; verse: string } | null {
+    const book = this.getBook(bookName);
+    if (!book) return null;
+    
+    const verses = this.getVerses(bookName, chapter);
+    const verseNum = parseInt(verse, 10);
+    
+    // Check if there's a next verse in current chapter
+    if (verseNum < verses.length) {
+      return { book: book.book, chapter, verse: String(verseNum + 1) };
+    }
+    
+    // Move to next chapter
+    const chapterNum = parseInt(chapter, 10);
+    const nextChapter = String(chapterNum + 1);
+    const nextChapterVerses = this.getVerses(bookName, nextChapter);
+    
+    if (nextChapterVerses.length > 0) {
+      return { book: book.book, chapter: nextChapter, verse: '1' };
+    }
+    
+    // Move to next book
+    const bookIndex = this.bookNames.findIndex(b => b.toLowerCase() === book.book.toLowerCase());
+    if (bookIndex >= 0 && bookIndex < this.bookNames.length - 1) {
+      const nextBook = this.bookNames[bookIndex + 1];
+      const nextBookFirstChapter = this.getChapters(nextBook)[0];
+      if (nextBookFirstChapter) {
+        return { book: nextBook, chapter: nextBookFirstChapter, verse: '1' };
+      }
+    }
+    
+    return null; // End of Bible
+  }
+  
+  getPreviousVerse(bookName: string, chapter: string, verse: string): { book: string; chapter: string; verse: string } | null {
+    const book = this.getBook(bookName);
+    if (!book) return null;
+    
+    const verseNum = parseInt(verse, 10);
+    
+    // Check if there's a previous verse in current chapter
+    if (verseNum > 1) {
+      return { book: book.book, chapter, verse: String(verseNum - 1) };
+    }
+    
+    // Move to previous chapter
+    const chapterNum = parseInt(chapter, 10);
+    if (chapterNum > 1) {
+      const prevChapter = String(chapterNum - 1);
+      const prevChapterVerses = this.getVerses(bookName, prevChapter);
+      if (prevChapterVerses.length > 0) {
+        return { book: book.book, chapter: prevChapter, verse: String(prevChapterVerses.length) };
+      }
+    }
+    
+    // Move to previous book
+    const bookIndex = this.bookNames.findIndex(b => b.toLowerCase() === book.book.toLowerCase());
+    if (bookIndex > 0) {
+      const prevBook = this.bookNames[bookIndex - 1];
+      const prevBookChapters = this.getChapters(prevBook);
+      const lastChapter = prevBookChapters[prevBookChapters.length - 1];
+      if (lastChapter) {
+        const lastChapterVerses = this.getVerses(prevBook, lastChapter);
+        return { book: prevBook, chapter: lastChapter, verse: String(lastChapterVerses.length) };
+      }
+    }
+    
+    return null; // Start of Bible
+  }
+  
+  isDataLoaded(): boolean {
+    return this.isLoaded;
+  }
+  
+  // Search by reference pattern (e.g., "John 3:16", "Gen 1:1-3")
+  searchByReference(query: string): Passage | null {
+    // Pattern: BookName Chapter:Verse(-EndVerse)?
+    const pattern = /^(.+?)\s*(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/i;
+    const match = query.match(pattern);
+    
+    if (!match) return null;
+    
+    const [, bookPart, chapter, verseStart, verseEnd] = match;
+    const bookName = this.resolveBookName(bookPart.trim());
+    
+    if (!bookName) return null;
+    
+    return this.getPassage({
+      book: bookName,
+      chapter,
+      verseStart,
+      verseEnd,
+      translation: this.currentTranslation,
+    });
+  }
+  
+  // Keyword search across all verses
+  searchByKeyword(query: string, limit: number = 20): Passage[] {
+    const results: Passage[] = [];
+    const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+    
+    if (searchTerms.length === 0) return results;
+    
+    for (const book of this.books.values()) {
+      for (const chapter of book.chapters) {
+        for (const verse of chapter.verses) {
+          const verseTextLower = verse.text.toLowerCase();
+          const matchCount = searchTerms.filter(term => verseTextLower.includes(term)).length;
+          
+          if (matchCount > 0) {
+            const passage = this.getPassage({
+              book: book.book,
+              chapter: chapter.chapter,
+              verseStart: verse.verse,
+              translation: this.currentTranslation,
+            });
+            
+            if (passage) {
+              results.push(passage);
+              if (results.length >= limit) return results;
+            }
+          }
+        }
+      }
+    }
+    
+    return results;
+  }
+}
+
+// Singleton instance
+export const BibleRepository = new BibleRepositoryClass();
