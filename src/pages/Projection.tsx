@@ -55,38 +55,63 @@ function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetU
 function AutoFitVerse({ passage }: { passage: Passage }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState(72);
 
-  const fitText = useCallback(() => {
+  const verseContent = passage.verses.map(v => v.text).join(' ');
+  const reference = passage.displayReference;
+
+  useLayoutEffect(() => {
     const container = containerRef.current;
     const text = textRef.current;
     if (!container || !text) return;
 
-    let size = 72;
-    const minSize = 20;
-    text.style.fontSize = `${size}px`;
+    const MAX_FONT_SIZE = 72;
+    const MIN_FONT_SIZE = 16;
+    const STEP = 2;
 
-    while (size > minSize && text.scrollHeight > container.clientHeight) {
-      size -= 2;
-      text.style.fontSize = `${size}px`;
+    let currentSize = MAX_FONT_SIZE;
+    text.style.fontSize = currentSize + 'px';
+
+    while (text.scrollHeight > container.clientHeight && currentSize > MIN_FONT_SIZE) {
+      currentSize -= STEP;
+      text.style.fontSize = currentSize + 'px';
     }
-    setFontSize(size);
-  }, []);
+  }, [verseContent, reference]);
 
   useEffect(() => {
-    fitText();
-    window.addEventListener('resize', fitText);
-    return () => window.removeEventListener('resize', fitText);
-  }, [passage, fitText]);
+    const handleResize = () => {
+      const container = containerRef.current;
+      const text = textRef.current;
+      if (!container || !text) return;
+
+      const MAX_FONT_SIZE = 72;
+      const MIN_FONT_SIZE = 16;
+      const STEP = 2;
+
+      let currentSize = MAX_FONT_SIZE;
+      text.style.fontSize = currentSize + 'px';
+
+      while (text.scrollHeight > container.clientHeight && currentSize > MIN_FONT_SIZE) {
+        currentSize -= STEP;
+        text.style.fontSize = currentSize + 'px';
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
-    <div ref={containerRef} className="flex-1 flex items-center justify-center overflow-hidden p-8 md:p-16">
+    <div
+      ref={containerRef}
+      className="overflow-hidden"
+      style={{ height: 'calc(100vh - 0px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}
+    >
       <div
         ref={textRef}
-        className="max-w-[70%] text-center space-y-8"
-        style={{ fontSize: `${fontSize}px` }}
+        className="text-center"
+        style={{ maxWidth: '70%', margin: '0 auto' }}
       >
-        <blockquote className="font-serif leading-relaxed tracking-wide text-projection-foreground">
+        <blockquote className="font-serif leading-relaxed tracking-wide text-projection-foreground" style={{ marginBottom: '0.5em' }}>
           {passage.verses.map((verse, index) => (
             <span key={verse.verse}>
               {passage.verses.length > 1 && (
@@ -101,7 +126,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
           className="font-sans font-medium tracking-widest uppercase text-projection-foreground/70"
           style={{ fontSize: '0.35em' }}
         >
-          {passage.displayReference}
+          {reference}
         </p>
       </div>
     </div>

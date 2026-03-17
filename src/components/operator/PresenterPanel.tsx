@@ -13,7 +13,7 @@ function SlideCard({
   slide: Slide | null;
   label: string;
   icon: React.ElementType;
-  variant: 'live' | 'next' | 'upcoming';
+  variant: 'live' | 'next';
 }) {
   const styles = {
     live: {
