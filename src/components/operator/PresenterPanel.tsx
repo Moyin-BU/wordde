@@ -34,15 +34,6 @@ function SlideCard({
       padding: 'p-4',
       glow: '',
     },
-    upcoming: {
-      border: 'border-border bg-card/30',
-      label: 'text-muted-foreground',
-      refSize: 'text-xs',
-      textSize: 'text-base',
-      minH: 'min-h-[90px]',
-      padding: 'p-3',
-      glow: '',
-    },
   }[variant];
 
   return (
