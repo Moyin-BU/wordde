@@ -13,7 +13,7 @@ function SlideCard({
   slide: Slide | null;
   label: string;
   icon: React.ElementType;
-  variant: 'live' | 'next' | 'upcoming';
+  variant: 'live' | 'next';
 }) {
   const styles = {
     live: {
@@ -34,15 +34,6 @@ function SlideCard({
       padding: 'p-4',
       glow: '',
     },
-    upcoming: {
-      border: 'border-border bg-card/30',
-      label: 'text-muted-foreground',
-      refSize: 'text-xs',
-      textSize: 'text-base',
-      minH: 'min-h-[90px]',
-      padding: 'p-3',
-      glow: '',
-    },
   }[variant];
 
   return (
@@ -53,7 +44,7 @@ function SlideCard({
         styles.minH,
         styles.padding,
         styles.glow,
-        variant === 'live' ? 'flex-[45]' : variant === 'next' ? 'flex-[30]' : 'flex-[25]'
+        variant === 'live' ? 'flex-[55]' : 'flex-[45]'
       )}
     >
       <div className="flex items-center gap-2 shrink-0">
@@ -81,7 +72,7 @@ function SlideCard({
           </>
         ) : (
           <p className="text-muted-foreground/40 text-sm italic">
-            {variant === 'live' ? 'No slide projected' : variant === 'next' ? 'No slide selected' : 'No slide available'}
+            {variant === 'live' ? 'No slide projected' : 'No slide selected'}
           </p>
         )}
       </div>
@@ -104,9 +95,6 @@ export function PresenterPanel() {
   const displayNext = isCurrentLive
     ? projectionQueue[currentSlideIndex + 1] ?? null
     : projectionQueue[currentSlideIndex] ?? null;
-  const displayNextPlusOne = isCurrentLive
-    ? projectionQueue[currentSlideIndex + 2] ?? null
-    : projectionQueue[currentSlideIndex + 1] ?? null;
 
   if (isScreenBlanked) {
     return (
@@ -134,7 +122,7 @@ export function PresenterPanel() {
         <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
           <SlideCard slide={null} label="Live" icon={Monitor} variant="live" />
           <SlideCard slide={null} label="Next" icon={SkipForward} variant="next" />
-          <SlideCard slide={null} label="Next +1" icon={SkipForward} variant="upcoming" />
+          
         </div>
       </div>
     );
@@ -165,7 +153,7 @@ export function PresenterPanel() {
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
-        <SlideCard slide={displayNextPlusOne} label="Next +1" icon={SkipForward} variant="upcoming" />
+        
       </div>
     </div>
   );
