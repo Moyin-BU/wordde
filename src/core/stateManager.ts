@@ -36,6 +36,8 @@ interface StateManager extends AppState {
   // Recent passages
   recentPassages: string[];
   addToRecent: (reference: string) => void;
+  removeFromRecent: (reference: string) => void;
+  clearAllRecent: () => void;
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
