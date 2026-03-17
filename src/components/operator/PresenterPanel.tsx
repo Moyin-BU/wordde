@@ -95,9 +95,6 @@ export function PresenterPanel() {
   const displayNext = isCurrentLive
     ? projectionQueue[currentSlideIndex + 1] ?? null
     : projectionQueue[currentSlideIndex] ?? null;
-  const displayNextPlusOne = isCurrentLive
-    ? projectionQueue[currentSlideIndex + 2] ?? null
-    : projectionQueue[currentSlideIndex + 1] ?? null;
 
   if (isScreenBlanked) {
     return (
