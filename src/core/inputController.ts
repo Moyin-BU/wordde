@@ -69,14 +69,6 @@ export function useInputController() {
         selectPrevious();
         break;
         
-      case 'Enter':
-        event.preventDefault();
-        // Explicit commit - this is the ONLY way to update Projection Screen
-        if (previewPassage) {
-          commitPassage();
-        }
-        break;
-        
       case 'Escape':
         event.preventDefault();
         clearPreview();
