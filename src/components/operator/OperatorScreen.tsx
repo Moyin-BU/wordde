@@ -196,9 +196,6 @@ export function OperatorScreen() {
           </span>
           <span className="text-border">│</span>
           <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Enter</kbd> Project
-          </span>
-          <span>
             <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">C</kbd> Chapter
           </span>
           <span>

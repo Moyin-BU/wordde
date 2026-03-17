@@ -145,21 +145,16 @@ export function useGlobalKeyboard() {
           clearPreview();
           return;
 
-        case 'Enter':
-          if (projectionQueue.length > 0) {
-            event.preventDefault();
-            commitCurrentSlide();
-          }
-          return;
-
         case 'ArrowRight':
           event.preventDefault();
           slideNext();
+          commitCurrentSlide();
           return;
 
         case 'ArrowLeft':
           event.preventDefault();
           slidePrevious();
+          commitCurrentSlide();
           return;
 
         case 'c':

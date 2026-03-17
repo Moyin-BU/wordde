@@ -144,7 +144,7 @@ export function PresenterPanel() {
           </span>
           <Button onClick={commitCurrentSlide} size="sm" className="gap-1.5 h-7 text-xs">
             <Send className="h-3 w-3" />
-            Commit
+            Project
           </Button>
         </div>
       </div>

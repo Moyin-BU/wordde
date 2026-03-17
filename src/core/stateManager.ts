@@ -298,6 +298,24 @@ export const useStateManager = create<StateManager>((set, get) => ({
       isScreenBlanked: false,
     });
     broadcastCommit(passage);
+
+    // Pre-load next slide if at end of queue to ensure Next preview is never blank
+    if (currentSlideIndex >= projectionQueue.length - 1) {
+      const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+      if (nextPos) {
+        const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
+        if (verse) {
+          const nextSlide: Slide = {
+            reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
+            text: verse.text,
+            book: nextPos.book,
+            chapter: nextPos.chapter,
+            verse: nextPos.verse,
+          };
+          set({ projectionQueue: [...get().projectionQueue, nextSlide] });
+        }
+      }
+    }
   },
 
   blankScreen: () => {
