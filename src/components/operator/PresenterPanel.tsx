@@ -72,7 +72,7 @@ function SlideCard({
           </>
         ) : (
           <p className="text-muted-foreground/40 text-sm italic">
-            {variant === 'live' ? 'No slide projected' : variant === 'next' ? 'No slide selected' : 'No slide available'}
+            {variant === 'live' ? 'No slide projected' : 'No slide selected'}
           </p>
         )}
       </div>
