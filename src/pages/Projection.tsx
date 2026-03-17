@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef, useCallback } from 'react';
 import { onBroadcastMessage, requestCurrentState } from '@/core/broadcastSync';
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
