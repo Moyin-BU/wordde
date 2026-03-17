@@ -153,7 +153,7 @@ export function PresenterPanel() {
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
-        <SlideCard slide={displayNextPlusOne} label="Next +1" icon={SkipForward} variant="upcoming" />
+        
       </div>
     </div>
   );
