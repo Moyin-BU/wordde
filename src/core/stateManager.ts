@@ -132,9 +132,10 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (results.length > 0) {
       const passage = results[0].passage;
       set({ previewPassage: passage });
-      // Auto-build queue from first result
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
+      // Auto-project immediately
+      get().commitCurrentSlide();
     } else {
       set({ previewPassage: null, projectionQueue: [], currentSlideIndex: 0 });
     }
