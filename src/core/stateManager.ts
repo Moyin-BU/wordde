@@ -120,6 +120,15 @@ export const useStateManager = create<StateManager>((set, get) => ({
     set({ recentPassages: updated });
     localStorage.setItem('recentPassages', JSON.stringify(updated));
   },
+  removeFromRecent: (reference: string) => {
+    const updated = get().recentPassages.filter(r => r !== reference);
+    set({ recentPassages: updated });
+    localStorage.setItem('recentPassages', JSON.stringify(updated));
+  },
+  clearAllRecent: () => {
+    set({ recentPassages: [] });
+    localStorage.setItem('recentPassages', JSON.stringify([]));
+  },
 
   setSearchQuery: (query) => set({ searchQuery: query }),
 
