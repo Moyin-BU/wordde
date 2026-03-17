@@ -132,9 +132,10 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (results.length > 0) {
       const passage = results[0].passage;
       set({ previewPassage: passage });
-      // Auto-build queue from first result
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
+      // Auto-project immediately
+      get().commitCurrentSlide();
     } else {
       set({ previewPassage: null, projectionQueue: [], currentSlideIndex: 0 });
     }
@@ -145,6 +146,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (passage) {
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
+      // Auto-project immediately
+      get().commitCurrentSlide();
     }
   },
 
@@ -159,6 +162,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
         projectionQueue: slides,
         currentSlideIndex: 0,
       });
+      // Auto-project immediately
+      get().commitCurrentSlide();
     }
   },
 
@@ -218,12 +223,16 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const slides = passageToSlides(passage);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
     get().addToRecent(passage.displayReference);
+    // Auto-project immediately
+    get().commitCurrentSlide();
   },
 
   buildQueueFromChapter: (book, chapter) => {
     const slides = chapterToSlides(book, chapter);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
     get().addToRecent(`${book} ${chapter}`);
+    // Auto-project immediately
+    get().commitCurrentSlide();
   },
 
   slideNext: () => {
@@ -289,6 +298,24 @@ export const useStateManager = create<StateManager>((set, get) => ({
       isScreenBlanked: false,
     });
     broadcastCommit(passage);
+
+    // Pre-load next slide if at end of queue to ensure Next preview is never blank
+    if (currentSlideIndex >= projectionQueue.length - 1) {
+      const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+      if (nextPos) {
+        const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
+        if (verse) {
+          const nextSlide: Slide = {
+            reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
+            text: verse.text,
+            book: nextPos.book,
+            chapter: nextPos.chapter,
+            verse: nextPos.verse,
+          };
+          set({ projectionQueue: [...get().projectionQueue, nextSlide] });
+        }
+      }
+    }
   },
 
   blankScreen: () => {

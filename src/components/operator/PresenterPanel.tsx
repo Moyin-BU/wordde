@@ -91,9 +91,9 @@ export function PresenterPanel() {
 
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
 
-  const isCurrentLive = liveSlideIndex === currentSlideIndex;
-  const displayNext = isCurrentLive
-    ? projectionQueue[currentSlideIndex + 1] ?? null
+  // Next slide is always the one after the live slide
+  const displayNext = liveSlideIndex !== null
+    ? projectionQueue[liveSlideIndex + 1] ?? null
     : projectionQueue[currentSlideIndex] ?? null;
 
   if (isScreenBlanked) {
@@ -144,7 +144,7 @@ export function PresenterPanel() {
           </span>
           <Button onClick={commitCurrentSlide} size="sm" className="gap-1.5 h-7 text-xs">
             <Send className="h-3 w-3" />
-            Commit
+            Project
           </Button>
         </div>
       </div>

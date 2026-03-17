@@ -69,14 +69,6 @@ export function useInputController() {
         selectPrevious();
         break;
         
-      case 'Enter':
-        event.preventDefault();
-        // Explicit commit - this is the ONLY way to update Projection Screen
-        if (previewPassage) {
-          commitPassage();
-        }
-        break;
-        
       case 'Escape':
         event.preventDefault();
         clearPreview();
@@ -153,21 +145,16 @@ export function useGlobalKeyboard() {
           clearPreview();
           return;
 
-        case 'Enter':
-          if (projectionQueue.length > 0) {
-            event.preventDefault();
-            commitCurrentSlide();
-          }
-          return;
-
         case 'ArrowRight':
           event.preventDefault();
           slideNext();
+          commitCurrentSlide();
           return;
 
         case 'ArrowLeft':
           event.preventDefault();
           slidePrevious();
+          commitCurrentSlide();
           return;
 
         case 'c':
