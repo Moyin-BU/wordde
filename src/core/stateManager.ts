@@ -218,12 +218,16 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const slides = passageToSlides(passage);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
     get().addToRecent(passage.displayReference);
+    // Auto-project immediately
+    get().commitCurrentSlide();
   },
 
   buildQueueFromChapter: (book, chapter) => {
     const slides = chapterToSlides(book, chapter);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
     get().addToRecent(`${book} ${chapter}`);
+    // Auto-project immediately
+    get().commitCurrentSlide();
   },
 
   slideNext: () => {
