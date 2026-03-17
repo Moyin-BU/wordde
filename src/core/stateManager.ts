@@ -146,6 +146,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (passage) {
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
+      // Auto-project immediately
+      get().commitCurrentSlide();
     }
   },
 
@@ -160,6 +162,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
         projectionQueue: slides,
         currentSlideIndex: 0,
       });
+      // Auto-project immediately
+      get().commitCurrentSlide();
     }
   },
 
