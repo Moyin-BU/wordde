@@ -142,7 +142,7 @@ export function OperatorScreen() {
               )}
 
               {/* Recent Passages (inline, compact) */}
-              <RecentPassages />
+              <div data-tutorial="recent"><RecentPassages /></div>
 
               {/* Bible Navigator */}
               <BibleNavigator />
