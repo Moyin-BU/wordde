@@ -179,7 +179,7 @@ export function OperatorScreen() {
         </div>
 
         {/* Right Column - Presenter Panel */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
           <PresenterPanel />
         </div>
       </main>
