@@ -118,7 +118,7 @@ export function OperatorScreen() {
               </div>
 
               {/* Search */}
-              <div className="px-3 pb-2" onKeyDown={handleKeyDown}>
+              <div className="px-3 pb-2" data-tutorial="search" onKeyDown={handleKeyDown}>
                 <SearchInput
                   value={searchQuery}
                   onChange={handleInputChange}
