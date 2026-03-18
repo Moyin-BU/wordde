@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
