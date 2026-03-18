@@ -145,7 +145,7 @@ export function OperatorScreen() {
               <div data-tutorial="recent"><RecentPassages /></div>
 
               {/* Bible Navigator */}
-              <BibleNavigator />
+              <div data-tutorial="navigator"><BibleNavigator /></div>
             </div>
 
             {/* ===== SERVICE SECTION ===== */}
