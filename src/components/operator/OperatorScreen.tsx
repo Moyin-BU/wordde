@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
@@ -74,6 +75,7 @@ export function OperatorScreen() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <OnboardingManager />
       {/* Compact Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
         <div className="px-4 py-2">
@@ -116,7 +118,7 @@ export function OperatorScreen() {
               </div>
 
               {/* Search */}
-              <div className="px-3 pb-2" onKeyDown={handleKeyDown}>
+              <div className="px-3 pb-2" data-tutorial="search" onKeyDown={handleKeyDown}>
                 <SearchInput
                   value={searchQuery}
                   onChange={handleInputChange}
@@ -140,10 +142,10 @@ export function OperatorScreen() {
               )}
 
               {/* Recent Passages (inline, compact) */}
-              <RecentPassages />
+              <div data-tutorial="recent"><RecentPassages /></div>
 
               {/* Bible Navigator */}
-              <BibleNavigator />
+              <div data-tutorial="navigator"><BibleNavigator /></div>
             </div>
 
             {/* ===== SERVICE SECTION ===== */}
@@ -151,7 +153,7 @@ export function OperatorScreen() {
               <div className="px-3 py-2">
                 <span className="text-[10px] font-semibold text-primary uppercase tracking-widest">Service</span>
               </div>
-              <ServicePlan />
+              <div data-tutorial="service"><ServicePlan /></div>
             </div>
 
             {/* ===== DISPLAY SECTION (collapsible) ===== */}
@@ -177,7 +179,7 @@ export function OperatorScreen() {
         </div>
 
         {/* Right Column - Presenter Panel */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
           <PresenterPanel />
         </div>
       </main>

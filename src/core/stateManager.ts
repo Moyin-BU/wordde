@@ -233,16 +233,14 @@ export const useStateManager = create<StateManager>((set, get) => ({
   buildQueueFromPassage: (passage) => {
     const slides = passageToSlides(passage);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    get().addToRecent(passage.displayReference);
-    // Auto-project immediately
+    // Auto-project immediately (commitCurrentSlide handles addToRecent)
     get().commitCurrentSlide();
   },
 
   buildQueueFromChapter: (book, chapter) => {
     const slides = chapterToSlides(book, chapter);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    get().addToRecent(`${book} ${chapter}`);
-    // Auto-project immediately
+    // Auto-project immediately (commitCurrentSlide handles addToRecent)
     get().commitCurrentSlide();
   },
 
@@ -309,6 +307,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
       isScreenBlanked: false,
     });
     broadcastCommit(passage);
+    // Track in recent passages — single source of truth for all projection paths
+    get().addToRecent(slide.reference);
 
     // Pre-load next slide if at end of queue to ensure Next preview is never blank
     if (currentSlideIndex >= projectionQueue.length - 1) {
