@@ -153,7 +153,7 @@ export function OperatorScreen() {
               <div className="px-3 py-2">
                 <span className="text-[10px] font-semibold text-primary uppercase tracking-widest">Service</span>
               </div>
-              <ServicePlan />
+              <div data-tutorial="service"><ServicePlan /></div>
             </div>
 
             {/* ===== DISPLAY SECTION (collapsible) ===== */}
