@@ -75,6 +75,7 @@ export function OperatorScreen() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <OnboardingManager />
       {/* Compact Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
         <div className="px-4 py-2">
