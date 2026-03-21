@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { SearchEngine } from '@/core/searchEngine';
-import { onBroadcastMessage, broadcastStateResponse } from '@/core/broadcastSync';
+import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { SearchInput } from './SearchInput';
 import { ResultsList } from './ResultsList';
 import { PresenterPanel } from './PresenterPanel';
