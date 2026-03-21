@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef, useCallback } from 'react';
-import { onBroadcastMessage, requestCurrentState } from '@/core/broadcastSync';
+import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, loadPersistedProjectionState } from '@/core/broadcastSync';
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets, type AssetType } from '@/core/assetStorage';
