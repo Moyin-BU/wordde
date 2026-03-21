@@ -146,9 +146,10 @@ const Projection = () => {
   });
   const [assetUrls, setAssetUrls] = useState<Record<AssetType, string>>({ logo: '', softBackground: '' });
 
-  // Load assets from IndexedDB on mount
   useEffect(() => {
     loadAllAssets().then(setAssetUrls);
+    const timer = setTimeout(() => setShowHint(false), 5000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
