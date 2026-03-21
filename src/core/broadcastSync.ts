@@ -54,7 +54,9 @@ export type BroadcastMessage =
   | { type: 'UNBLANK_SCREEN' }
   | { type: 'REQUEST_STATE' }
   | { type: 'STATE_RESPONSE'; payload: Passage | null }
-  | { type: 'RELOAD_ASSETS' };
+  | { type: 'RELOAD_ASSETS' }
+  | { type: 'HEARTBEAT'; timestamp: number }
+  | { type: 'SYNC'; payload: Passage | null; isBlanked: boolean; blankSettings?: BlankSettings };
 
 let channel: BroadcastChannel | null = null;
 
@@ -98,6 +100,38 @@ export function broadcastStateResponse(passage: Passage | null): void {
 /** Tell projection tab to reload images from IndexedDB */
 export function broadcastReloadAssets(): void {
   getChannel().postMessage({ type: 'RELOAD_ASSETS' } satisfies BroadcastMessage);
+}
+
+/** Send heartbeat from projector */
+export function broadcastHeartbeat(): void {
+  getChannel().postMessage({ type: 'HEARTBEAT', timestamp: Date.now() } satisfies BroadcastMessage);
+}
+
+/** Send periodic state sync from operator */
+export function broadcastSync(passage: Passage | null, isBlanked: boolean, blankSettings?: BlankSettings): void {
+  getChannel().postMessage({ type: 'SYNC', payload: passage, isBlanked, blankSettings } satisfies BroadcastMessage);
+}
+
+// --- Projection state persistence ---
+const PROJECTION_STATE_KEY = 'projectionState';
+
+export interface PersistedProjectionState {
+  passage: Passage | null;
+  isBlanked: boolean;
+  blankSettings?: BlankSettings;
+  timestamp: number;
+}
+
+export function persistProjectionState(state: PersistedProjectionState): void {
+  localStorage.setItem(PROJECTION_STATE_KEY, JSON.stringify(state));
+}
+
+export function loadPersistedProjectionState(): PersistedProjectionState | null {
+  try {
+    const raw = localStorage.getItem(PROJECTION_STATE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
 }
 
 /** Listen for committed passage updates from other tabs */

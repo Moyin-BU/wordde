@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import type { AppState, Passage, Slide, SearchResult } from './types';
 import { BibleRepository } from './bibleRepository';
-import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings } from './broadcastSync';
+import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings, persistProjectionState } from './broadcastSync';
 
 interface StateManager extends AppState {
   // State mutation methods
@@ -307,6 +307,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
       isScreenBlanked: false,
     });
     broadcastCommit(passage);
+    // Persist for refresh-safe projection
+    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
     // Track in recent passages — single source of truth for all projection paths
     get().addToRecent(slide.reference);
 
@@ -330,15 +332,16 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   blankScreen: () => {
-    const { isScreenBlanked } = get();
+    const { isScreenBlanked, committedPassage } = get();
     if (isScreenBlanked) {
-      // Toggle back to live
       set({ isScreenBlanked: false });
       broadcastUnblank();
+      persistProjectionState({ passage: committedPassage, isBlanked: false, timestamp: Date.now() });
     } else {
       set({ isScreenBlanked: true });
       const settings = loadBlankSettings();
       broadcastBlank(settings);
+      persistProjectionState({ passage: committedPassage, isBlanked: true, blankSettings: settings, timestamp: Date.now() });
     }
   },
 
