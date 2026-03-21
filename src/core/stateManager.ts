@@ -332,15 +332,16 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   blankScreen: () => {
-    const { isScreenBlanked } = get();
+    const { isScreenBlanked, committedPassage } = get();
     if (isScreenBlanked) {
-      // Toggle back to live
       set({ isScreenBlanked: false });
       broadcastUnblank();
+      persistProjectionState({ passage: committedPassage, isBlanked: false, timestamp: Date.now() });
     } else {
       set({ isScreenBlanked: true });
       const settings = loadBlankSettings();
       broadcastBlank(settings);
+      persistProjectionState({ passage: committedPassage, isBlanked: true, blankSettings: settings, timestamp: Date.now() });
     }
   },
 
