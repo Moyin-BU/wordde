@@ -136,6 +136,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
 const Projection = () => {
   const [passage, setPassage] = useState<Passage | null>(null);
   const [isBlanked, setIsBlanked] = useState(false);
+  const [showHint, setShowHint] = useState(true);
   const [blankSettings, setBlankSettings] = useState<BlankSettings>({
     style: 'black',
     logoUrl: '',
@@ -145,9 +146,10 @@ const Projection = () => {
   });
   const [assetUrls, setAssetUrls] = useState<Record<AssetType, string>>({ logo: '', softBackground: '' });
 
-  // Load assets from IndexedDB on mount
   useEffect(() => {
     loadAllAssets().then(setAssetUrls);
+    const timer = setTimeout(() => setShowHint(false), 5000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -176,7 +178,7 @@ const Projection = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-projection text-projection-foreground cursor-none select-none">
+    <div className="min-h-screen flex flex-col bg-projection text-projection-foreground cursor-none select-none relative">
       {isBlanked ? (
         <BlankOverlay settings={blankSettings} assetUrls={assetUrls} />
       ) : passage ? (
@@ -186,6 +188,11 @@ const Projection = () => {
           <div className="text-muted-foreground/30 text-2xl font-sans select-none">
             Waiting for passage…
           </div>
+        </div>
+      )}
+      {showHint && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-foreground/10 backdrop-blur-sm text-projection-foreground/60 text-sm font-sans animate-pulse select-none pointer-events-none">
+          Press F11 for fullscreen projection
         </div>
       )}
     </div>

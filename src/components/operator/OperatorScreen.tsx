@@ -13,7 +13,8 @@ import { BibleNavigator } from './BibleNavigator';
 import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
-import { Book, Monitor, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { Book, Monitor, Search, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -101,6 +102,16 @@ export function OperatorScreen() {
                   <PassageNavigation />
                 </div>
               )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5"
+                onClick={() => window.open('/projection', 'projector', 'noopener')}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Open Projector
+              </Button>
             </div>
           </div>
         </div>
