@@ -146,10 +146,26 @@ const Projection = () => {
   });
   const [assetUrls, setAssetUrls] = useState<Record<AssetType, string>>({ logo: '', softBackground: '' });
 
+  // Load persisted state immediately on mount (refresh-safe)
   useEffect(() => {
     loadAllAssets().then(setAssetUrls);
+
+    const persisted = loadPersistedProjectionState();
+    if (persisted) {
+      setPassage(persisted.passage);
+      setIsBlanked(persisted.isBlanked);
+      if (persisted.blankSettings) setBlankSettings(persisted.blankSettings);
+    }
+
     const timer = setTimeout(() => setShowHint(false), 5000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Heartbeat: tell operator we're alive
+  useEffect(() => {
+    broadcastHeartbeat();
+    const interval = setInterval(broadcastHeartbeat, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -166,8 +182,11 @@ const Projection = () => {
         setIsBlanked(false);
       } else if (msg.type === 'STATE_RESPONSE') {
         setPassage(msg.payload);
+      } else if (msg.type === 'SYNC') {
+        setPassage(msg.payload);
+        setIsBlanked(msg.isBlanked);
+        if (msg.blankSettings) setBlankSettings(msg.blankSettings);
       } else if (msg.type === 'RELOAD_ASSETS') {
-        // Revoke old URLs and reload from IndexedDB
         Object.values(assetUrls).forEach(u => { if (u) URL.revokeObjectURL(u); });
         loadAllAssets().then(setAssetUrls);
       }
