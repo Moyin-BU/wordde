@@ -54,7 +54,9 @@ export type BroadcastMessage =
   | { type: 'UNBLANK_SCREEN' }
   | { type: 'REQUEST_STATE' }
   | { type: 'STATE_RESPONSE'; payload: Passage | null }
-  | { type: 'RELOAD_ASSETS' };
+  | { type: 'RELOAD_ASSETS' }
+  | { type: 'HEARTBEAT'; timestamp: number }
+  | { type: 'SYNC'; payload: Passage | null; isBlanked: boolean; blankSettings?: BlankSettings };
 
 let channel: BroadcastChannel | null = null;
 
