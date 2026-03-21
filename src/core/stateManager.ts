@@ -307,6 +307,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
       isScreenBlanked: false,
     });
     broadcastCommit(passage);
+    // Persist for refresh-safe projection
+    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
     // Track in recent passages — single source of truth for all projection paths
     get().addToRecent(slide.reference);
 
