@@ -142,11 +142,24 @@ export function OperatorScreen() {
                 </div>
               )}
 
+              {/* Projector connection status */}
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full',
+                    projectorConnected ? 'bg-green-500' : 'bg-destructive'
+                  )}
+                />
+                <span className="hidden sm:inline">
+                  {projectorConnected ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
                 className="h-7 text-xs gap-1.5"
-                onClick={() => window.open('/projection', 'projector', 'noopener')}
+                onClick={openProjector}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Open Projector
