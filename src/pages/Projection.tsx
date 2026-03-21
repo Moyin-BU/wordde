@@ -136,6 +136,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
 const Projection = () => {
   const [passage, setPassage] = useState<Passage | null>(null);
   const [isBlanked, setIsBlanked] = useState(false);
+  const [showHint, setShowHint] = useState(true);
   const [blankSettings, setBlankSettings] = useState<BlankSettings>({
     style: 'black',
     logoUrl: '',
