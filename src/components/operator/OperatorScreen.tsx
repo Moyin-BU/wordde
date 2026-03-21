@@ -102,6 +102,16 @@ export function OperatorScreen() {
                   <PassageNavigation />
                 </div>
               )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5"
+                onClick={() => window.open('/projection', 'projector', 'noopener')}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Open Projector
+              </Button>
             </div>
           </div>
         </div>
