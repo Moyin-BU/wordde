@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import type { AppState, Passage, Slide, SearchResult } from './types';
 import { BibleRepository } from './bibleRepository';
-import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings } from './broadcastSync';
+import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings, persistProjectionState } from './broadcastSync';
 
 interface StateManager extends AppState {
   // State mutation methods
