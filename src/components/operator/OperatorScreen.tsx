@@ -20,6 +20,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function OperatorScreen() {
   const [displayOpen, setDisplayOpen] = useState(false);
+  const [projectorConnected, setProjectorConnected] = useState(false);
+  const projectorWindowRef = useRef<Window | null>(null);
+  const lastHeartbeatRef = useRef<number>(0);
+
   const {
     searchQuery,
     searchResults,
@@ -35,14 +39,49 @@ export function OperatorScreen() {
 
   useGlobalKeyboard();
 
+  // Heartbeat listener + state request responder
   useEffect(() => {
     const unsub = onBroadcastMessage((msg) => {
       if (msg.type === 'REQUEST_STATE') {
         const state = useStateManager.getState();
         broadcastStateResponse(state.committedPassage);
+      } else if (msg.type === 'HEARTBEAT') {
+        lastHeartbeatRef.current = msg.timestamp;
+        setProjectorConnected(true);
       }
     });
     return unsub;
+  }, []);
+
+  // Heartbeat timeout checker
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (lastHeartbeatRef.current && Date.now() - lastHeartbeatRef.current > 5000) {
+        setProjectorConnected(false);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Periodic state re-sync (fail-safe)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const state = useStateManager.getState();
+      broadcastSync(
+        state.committedPassage,
+        state.isScreenBlanked,
+        state.isScreenBlanked ? loadBlankSettings() : undefined
+      );
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const openProjector = useCallback(() => {
+    if (projectorWindowRef.current && !projectorWindowRef.current.closed) {
+      projectorWindowRef.current.focus();
+      return;
+    }
+    projectorWindowRef.current = window.open('/projection', 'projector');
   }, []);
 
   useEffect(() => {
