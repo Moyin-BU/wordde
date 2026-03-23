@@ -1,7 +1,6 @@
 import { useStateManager } from '@/core/stateManager';
 import { cn } from '@/lib/utils';
-import { Eye, Monitor, SkipForward, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Eye, Monitor, SkipForward } from 'lucide-react';
 import type { Slide } from '@/core/types';
 
 function SlideCard({
