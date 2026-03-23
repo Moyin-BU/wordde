@@ -56,11 +56,12 @@ export type BroadcastMessage =
   | { type: 'STATE_RESPONSE'; payload: Passage | null }
   | { type: 'RELOAD_ASSETS' }
   | { type: 'HEARTBEAT'; timestamp: number }
+  | { type: 'PROJECTOR_READY' }
   | { type: 'SYNC'; payload: Passage | null; isBlanked: boolean; blankSettings?: BlankSettings };
 
 let channel: BroadcastChannel | null = null;
 
-function getChannel(): BroadcastChannel {
+export function getChannel(): BroadcastChannel {
   if (!channel) {
     channel = new BroadcastChannel(CHANNEL_NAME);
   }

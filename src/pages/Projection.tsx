@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState, useRef, useCallback } from 'react';
-import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, loadPersistedProjectionState } from '@/core/broadcastSync';
+import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, loadPersistedProjectionState, getChannel } from '@/core/broadcastSync';
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets, type AssetType } from '@/core/assetStorage';
@@ -161,8 +161,10 @@ const Projection = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Heartbeat: tell operator we're alive
+  // Heartbeat + announce ready
   useEffect(() => {
+    // Send PROJECTOR_READY immediately so operator knows we're alive
+    getChannel().postMessage({ type: 'PROJECTOR_READY' });
     broadcastHeartbeat();
     const interval = setInterval(broadcastHeartbeat, 2000);
     return () => clearInterval(interval);

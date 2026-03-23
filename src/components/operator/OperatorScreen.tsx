@@ -1,10 +1,9 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { SearchEngine } from '@/core/searchEngine';
-import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { SearchInput } from './SearchInput';
 import { ResultsList } from './ResultsList';
 import { PresenterPanel } from './PresenterPanel';
@@ -13,16 +12,13 @@ import { BibleNavigator } from './BibleNavigator';
 import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
-import { Book, Monitor, Search, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ProjectionControl } from './ProjectionControl';
+import { Book, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function OperatorScreen() {
   const [displayOpen, setDisplayOpen] = useState(false);
-  const [projectorConnected, setProjectorConnected] = useState(false);
-  const projectorWindowRef = useRef<Window | null>(null);
-  const lastHeartbeatRef = useRef<number>(0);
 
   const {
     searchQuery,
@@ -38,51 +34,6 @@ export function OperatorScreen() {
   const { committedPassage, isLoading, isBibleLoaded, setBibleLoaded, setLoading, isScreenBlanked } = useStateManager();
 
   useGlobalKeyboard();
-
-  // Heartbeat listener + state request responder
-  useEffect(() => {
-    const unsub = onBroadcastMessage((msg) => {
-      if (msg.type === 'REQUEST_STATE') {
-        const state = useStateManager.getState();
-        broadcastStateResponse(state.committedPassage);
-      } else if (msg.type === 'HEARTBEAT') {
-        lastHeartbeatRef.current = msg.timestamp;
-        setProjectorConnected(true);
-      }
-    });
-    return unsub;
-  }, []);
-
-  // Heartbeat timeout checker
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (lastHeartbeatRef.current && Date.now() - lastHeartbeatRef.current > 5000) {
-        setProjectorConnected(false);
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Periodic state re-sync (fail-safe)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const state = useStateManager.getState();
-      broadcastSync(
-        state.committedPassage,
-        state.isScreenBlanked,
-        state.isScreenBlanked ? loadBlankSettings() : undefined
-      );
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const openProjector = useCallback(() => {
-    if (projectorWindowRef.current && !projectorWindowRef.current.closed) {
-      projectorWindowRef.current.focus();
-      return;
-    }
-    projectorWindowRef.current = window.open('/projection', 'projector');
-  }, []);
 
   useEffect(() => {
     if (!isBibleLoaded) {
@@ -142,28 +93,7 @@ export function OperatorScreen() {
                 </div>
               )}
 
-              {/* Projector connection status */}
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span
-                  className={cn(
-                    'h-2 w-2 rounded-full',
-                    projectorConnected ? 'bg-green-500' : 'bg-destructive'
-                  )}
-                />
-                <span className="hidden sm:inline">
-                  {projectorConnected ? 'Connected' : 'Disconnected'}
-                </span>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs gap-1.5"
-                onClick={openProjector}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Open Projector
-              </Button>
+              <ProjectionControl />
             </div>
           </div>
         </div>
