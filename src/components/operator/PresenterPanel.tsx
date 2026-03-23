@@ -1,7 +1,6 @@
 import { useStateManager } from '@/core/stateManager';
 import { cn } from '@/lib/utils';
-import { Eye, Monitor, SkipForward, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Eye, Monitor, SkipForward } from 'lucide-react';
 import type { Slide } from '@/core/types';
 
 function SlideCard({
@@ -86,7 +85,6 @@ export function PresenterPanel() {
     currentSlideIndex,
     liveSlideIndex,
     isScreenBlanked,
-    commitCurrentSlide,
   } = useStateManager();
 
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
@@ -138,15 +136,9 @@ export function PresenterPanel() {
           </div>
           <span className="text-xs font-medium text-muted-foreground">Presenter</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">
-            {currentSlideIndex + 1} / {projectionQueue.length}
-          </span>
-          <Button onClick={commitCurrentSlide} size="sm" className="gap-1.5 h-7 text-xs">
-            <Send className="h-3 w-3" />
-            Project
-          </Button>
-        </div>
+        <span className="text-xs text-muted-foreground">
+          {currentSlideIndex + 1} / {projectionQueue.length}
+        </span>
       </div>
 
       {/* Slide stack with visual hierarchy */}

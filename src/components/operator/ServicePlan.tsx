@@ -8,6 +8,16 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 export interface ServicePlanItem {
@@ -28,7 +38,6 @@ function loadServices(): Service[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-    // Migrate old single plan
     const old = localStorage.getItem('servicePlan');
     if (old) {
       const passages: ServicePlanItem[] = JSON.parse(old);
@@ -66,6 +75,14 @@ export function ServicePlan() {
   // Rename state
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+
+  // Edit passage state
+  const [editingPassageIdx, setEditingPassageIdx] = useState<number | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editReference, setEditReference] = useState('');
+
+  // Delete confirmation state
+  const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
 
   const { buildQueueFromPassage, buildQueueFromChapter } = useStateManager();
 
@@ -167,7 +184,26 @@ export function ServicePlan() {
     updateActivePassages(p => p.filter((_, i) => i !== index));
     if (activePassageIndex === index) setActivePassageIndex(null);
     else if (activePassageIndex !== null && activePassageIndex > index) setActivePassageIndex(activePassageIndex - 1);
+    setDeleteConfirmIdx(null);
   }, [activePassageIndex, updateActivePassages]);
+
+  const startEditPassage = useCallback((idx: number) => {
+    if (!activeService) return;
+    const item = activeService.passages[idx];
+    setEditingPassageIdx(idx);
+    setEditLabel(item.label);
+    setEditReference(item.reference);
+  }, [activeService]);
+
+  const saveEditPassage = useCallback(() => {
+    if (editingPassageIdx === null) return;
+    const ref = editReference.trim();
+    if (!ref) return;
+    updateActivePassages(p => p.map((item, i) =>
+      i === editingPassageIdx ? { ...item, label: editLabel.trim() || ref, reference: ref } : item
+    ));
+    setEditingPassageIdx(null);
+  }, [editingPassageIdx, editLabel, editReference, updateActivePassages]);
 
   const movePassage = useCallback((index: number, dir: 'up' | 'down') => {
     updateActivePassages(prev => {
@@ -311,34 +347,66 @@ export function ServicePlan() {
               <div
                 key={item.id}
                 className={cn(
-                  'group rounded-md border transition-colors cursor-pointer',
+                  'group rounded-md border transition-colors',
                   activePassageIndex === idx ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent/50'
                 )}
               >
-                <div className="flex items-start gap-2 px-2.5 py-2" onClick={() => loadPassageAtIndex(idx)}>
-                  <div className="mt-0.5 shrink-0">
-                    {activePassageIndex === idx ? (
-                      <Play className="h-3 w-3 text-primary fill-primary" />
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground font-mono w-3 inline-block text-center">{idx + 1}</span>
-                    )}
+                {editingPassageIdx === idx ? (
+                  /* Inline edit form */
+                  <div className="px-2.5 py-2 space-y-1.5" onClick={e => e.stopPropagation()}>
+                    <Input
+                      value={editLabel}
+                      onChange={e => setEditLabel(e.target.value)}
+                      placeholder="Label"
+                      className="h-7 text-xs"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveEditPassage(); } if (e.key === 'Escape') setEditingPassageIdx(null); }}
+                    />
+                    <Input
+                      value={editReference}
+                      onChange={e => setEditReference(e.target.value)}
+                      placeholder="Reference"
+                      className="h-7 text-xs"
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); saveEditPassage(); } if (e.key === 'Escape') setEditingPassageIdx(null); }}
+                    />
+                    <div className="flex gap-1">
+                      <Button onClick={saveEditPassage} size="sm" className="h-6 text-[11px] flex-1 gap-1">
+                        <Check className="h-3 w-3" /> Save
+                      </Button>
+                      <Button onClick={() => setEditingPassageIdx(null)} variant="ghost" size="sm" className="h-6 text-[11px] flex-1 gap-1">
+                        <X className="h-3 w-3" /> Cancel
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{item.label}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{item.reference}</p>
+                ) : (
+                  <div className="flex items-start gap-2 px-2.5 py-2 cursor-pointer" onClick={() => loadPassageAtIndex(idx)}>
+                    <div className="mt-0.5 shrink-0">
+                      {activePassageIndex === idx ? (
+                        <Play className="h-3 w-3 text-primary fill-primary" />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground font-mono w-3 inline-block text-center">{idx + 1}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground truncate">{item.label}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{item.reference}</p>
+                    </div>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <button onClick={e => { e.stopPropagation(); startEditPassage(idx); }} className="p-0.5 rounded hover:bg-accent" title="Edit">
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); movePassage(idx, 'up'); }} disabled={idx === 0} className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                        <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); movePassage(idx, 'down'); }} disabled={idx === activeService!.passages.length - 1} className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
+                        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); setDeleteConfirmIdx(idx); }} className="p-0.5 rounded hover:bg-destructive/20" title="Delete">
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    <button onClick={e => { e.stopPropagation(); movePassage(idx, 'up'); }} disabled={idx === 0} className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
-                      <ChevronUp className="h-3 w-3 text-muted-foreground" />
-                    </button>
-                    <button onClick={e => { e.stopPropagation(); movePassage(idx, 'down'); }} disabled={idx === activeService!.passages.length - 1} className="p-0.5 rounded hover:bg-accent disabled:opacity-30">
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    </button>
-                    <button onClick={e => { e.stopPropagation(); removePassage(idx); }} className="p-0.5 rounded hover:bg-destructive/20">
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             ))}
             {isAtEnd && (
@@ -347,6 +415,27 @@ export function ServicePlan() {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteConfirmIdx !== null} onOpenChange={open => { if (!open) setDeleteConfirmIdx(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Passage</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this passage from the Service Plan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (deleteConfirmIdx !== null) removePassage(deleteConfirmIdx); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -2,10 +2,30 @@ import { useState, useMemo, useCallback } from 'react';
 import { BibleRepository } from '@/core/bibleRepository';
 import { useStateManager } from '@/core/stateManager';
 import { cn } from '@/lib/utils';
-import { ChevronRight, ChevronLeft, BookOpen, Layers, AlignLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, BookOpen, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type NavLevel = 'books' | 'chapters' | 'verses';
+
+const OT_BOOKS = [
+  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
+  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
+  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles',
+  'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
+  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+  'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
+  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah',
+  'Haggai', 'Zechariah', 'Malachi',
+];
+
+const NT_BOOKS = [
+  'Matthew', 'Mark', 'Luke', 'John', 'Acts',
+  'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
+  'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians',
+  '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews',
+  'James', '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
+  'Jude', 'Revelation',
+];
 
 export function BibleNavigator() {
   const [level, setLevel] = useState<NavLevel>('books');
@@ -15,7 +35,11 @@ export function BibleNavigator() {
 
   const { buildQueueFromPassage, buildQueueFromChapter } = useStateManager();
 
-  const books = useMemo(() => BibleRepository.getAllBooks(), []);
+  const allBooks = useMemo(() => BibleRepository.getAllBooks(), []);
+
+  // Filter to only books that are actually loaded
+  const otBooks = useMemo(() => OT_BOOKS.filter(b => allBooks.some(ab => ab.toLowerCase() === b.toLowerCase())), [allBooks]);
+  const ntBooks = useMemo(() => NT_BOOKS.filter(b => allBooks.some(ab => ab.toLowerCase() === b.toLowerCase())), [allBooks]);
 
   const chapters = useMemo(() => {
     if (!selectedBook) return [];
@@ -72,6 +96,24 @@ export function BibleNavigator() {
       ? selectedBook
       : `${selectedBook} ${selectedChapter}`;
 
+  const BookColumn = ({ title, books }: { title: string; books: string[] }) => (
+    <div className="flex-1 min-w-0">
+      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest px-1 pb-1">{title}</p>
+      <div className="space-y-px">
+        {books.map((book) => (
+          <button
+            key={book}
+            onClick={() => handleBookClick(book)}
+            className="w-full flex items-center justify-between px-2 py-1 rounded text-xs text-left hover:bg-accent transition-colors group"
+          >
+            <span className="truncate text-foreground">{book}</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="px-2 pb-2">
       {/* Header / Toggle */}
@@ -93,21 +135,14 @@ export function BibleNavigator() {
         )}
       </button>
 
-      {/* Content - always shown when navigating deeper, toggle for books */}
+      {/* Content */}
       {(level !== 'books' || expanded) && (
         <div>
           {level === 'books' && (
-            <div className="grid grid-cols-2 gap-0.5">
-              {books.map((book) => (
-                <button
-                  key={book}
-                  onClick={() => handleBookClick(book)}
-                  className="flex items-center justify-between px-2 py-1.5 rounded text-xs text-left hover:bg-accent transition-colors group"
-                >
-                  <span className="truncate text-foreground">{book}</span>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0" />
-                </button>
-              ))}
+            <div className="flex gap-2">
+              <BookColumn title="Old Testament" books={otBooks} />
+              <div className="w-px bg-border shrink-0" />
+              <BookColumn title="New Testament" books={ntBooks} />
             </div>
           )}
 
