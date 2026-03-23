@@ -61,7 +61,7 @@ export type BroadcastMessage =
 
 let channel: BroadcastChannel | null = null;
 
-function getChannel(): BroadcastChannel {
+export function getChannel(): BroadcastChannel {
   if (!channel) {
     channel = new BroadcastChannel(CHANNEL_NAME);
   }
