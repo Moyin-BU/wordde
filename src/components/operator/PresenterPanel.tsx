@@ -85,7 +85,6 @@ export function PresenterPanel() {
     currentSlideIndex,
     liveSlideIndex,
     isScreenBlanked,
-    commitCurrentSlide,
   } = useStateManager();
 
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;

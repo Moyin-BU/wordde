@@ -1,7 +1,12 @@
 import { OperatorScreen } from '@/components/operator/OperatorScreen';
+import { MobileBlocker } from '@/components/MobileBlocker';
 
 const Index = () => {
-  return <OperatorScreen />;
+  return (
+    <MobileBlocker>
+      <OperatorScreen />
+    </MobileBlocker>
+  );
 };
 
 export default Index;
