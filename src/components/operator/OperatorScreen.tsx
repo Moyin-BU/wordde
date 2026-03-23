@@ -1,10 +1,9 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { SearchEngine } from '@/core/searchEngine';
-import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { SearchInput } from './SearchInput';
 import { ResultsList } from './ResultsList';
 import { PresenterPanel } from './PresenterPanel';
@@ -13,8 +12,8 @@ import { BibleNavigator } from './BibleNavigator';
 import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
-import { Book, Monitor, Search, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ProjectionControl } from './ProjectionControl';
+import { Book, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
