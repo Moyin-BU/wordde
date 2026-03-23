@@ -161,8 +161,10 @@ const Projection = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Heartbeat: tell operator we're alive
+  // Heartbeat + announce ready
   useEffect(() => {
+    // Send PROJECTOR_READY immediately so operator knows we're alive
+    getChannel().postMessage({ type: 'PROJECTOR_READY' });
     broadcastHeartbeat();
     const interval = setInterval(broadcastHeartbeat, 2000);
     return () => clearInterval(interval);
