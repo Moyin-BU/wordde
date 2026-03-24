@@ -88,9 +88,35 @@ export function PresenterPanel() {
     currentSlideIndex,
     liveSlideIndex,
     isScreenBlanked,
+    buildQueueFromPassage,
   } = useStateManager();
 
+  const [jumpValue, setJumpValue] = useState('');
+  const [jumpError, setJumpError] = useState('');
+
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+
+  const handleJump = useCallback(() => {
+    const verseNum = jumpValue.trim();
+    if (!verseNum || !liveSlide) return;
+    const parsed = parseInt(verseNum, 10);
+    if (isNaN(parsed) || parsed < 1) { setJumpError('Invalid verse number'); return; }
+
+    const verse = BibleRepository.getVerse(liveSlide.book, liveSlide.chapter, String(parsed));
+    if (!verse) { setJumpError('Verse not found in this chapter'); return; }
+
+    const passage = BibleRepository.getPassage({
+      book: liveSlide.book,
+      chapter: liveSlide.chapter,
+      verseStart: String(parsed),
+      translation: 'KJV',
+    });
+    if (passage) {
+      buildQueueFromPassage(passage);
+      setJumpValue('');
+      setJumpError('');
+    }
+  }, [jumpValue, liveSlide, buildQueueFromPassage]);
 
   // Next slide is always the one after the live slide
   const displayNext = liveSlideIndex !== null
