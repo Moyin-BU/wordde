@@ -13,7 +13,7 @@ import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
+import { Book, Monitor, ChevronDown, ChevronRight, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
