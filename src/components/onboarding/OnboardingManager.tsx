@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WelcomeSlides } from './WelcomeSlides';
 import { TutorialOverlay } from './TutorialOverlay';
 import {
@@ -22,19 +22,20 @@ export function OnboardingManager() {
     if (!onboarded) {
       setPhase('welcome');
     }
+
+    // Listen for restart event
+    const handler = () => setPhase('tutorial');
+    window.addEventListener('restartTutorial', handler);
+    return () => window.removeEventListener('restartTutorial', handler);
   }, []);
 
-  const finishOnboarding = () => {
+  const finishOnboarding = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, 'true');
     setPhase('done');
-  };
+  }, []);
 
   if (phase === 'welcome') {
-    return (
-      <WelcomeSlides
-        onComplete={() => setPhase('prompt')}
-      />
-    );
+    return <WelcomeSlides onComplete={() => setPhase('prompt')} />;
   }
 
   if (phase === 'prompt') {
@@ -73,8 +74,7 @@ export function OnboardingManager() {
   return null;
 }
 
-/** Call this to restart the onboarding flow */
-export function resetOnboarding() {
-  localStorage.removeItem(STORAGE_KEY);
-  window.location.reload();
+/** Call this to restart the tutorial */
+export function restartTutorial() {
+  window.dispatchEvent(new CustomEvent('restartTutorial'));
 }
