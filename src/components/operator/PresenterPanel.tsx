@@ -165,9 +165,25 @@ export function PresenterPanel() {
           </div>
           <span className="text-xs font-medium text-muted-foreground">Presenter</span>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {currentSlideIndex + 1} / {projectionQueue.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Verse #"
+              value={jumpValue}
+              onChange={e => { setJumpValue(e.target.value.replace(/\D/g, '')); setJumpError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleJump(); } }}
+              className={cn('h-6 w-16 text-xs text-center', jumpError && 'border-destructive')}
+              title="Jump to verse"
+            />
+            {jumpError && <span className="text-[10px] text-destructive whitespace-nowrap">{jumpError}</span>}
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {currentSlideIndex + 1} / {projectionQueue.length}
+          </span>
+        </div>
       </div>
 
       {/* Slide stack with visual hierarchy */}
