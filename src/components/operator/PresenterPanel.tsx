@@ -1,6 +1,9 @@
+import { useState, useCallback } from 'react';
 import { useStateManager } from '@/core/stateManager';
+import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
 import { Eye, Monitor, SkipForward } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import type { Slide } from '@/core/types';
 
 function SlideCard({
@@ -85,9 +88,35 @@ export function PresenterPanel() {
     currentSlideIndex,
     liveSlideIndex,
     isScreenBlanked,
+    buildQueueFromPassage,
   } = useStateManager();
 
+  const [jumpValue, setJumpValue] = useState('');
+  const [jumpError, setJumpError] = useState('');
+
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+
+  const handleJump = useCallback(() => {
+    const verseNum = jumpValue.trim();
+    if (!verseNum || !liveSlide) return;
+    const parsed = parseInt(verseNum, 10);
+    if (isNaN(parsed) || parsed < 1) { setJumpError('Invalid verse number'); return; }
+
+    const verse = BibleRepository.getVerse(liveSlide.book, liveSlide.chapter, String(parsed));
+    if (!verse) { setJumpError('Verse not found in this chapter'); return; }
+
+    const passage = BibleRepository.getPassage({
+      book: liveSlide.book,
+      chapter: liveSlide.chapter,
+      verseStart: String(parsed),
+      translation: 'KJV',
+    });
+    if (passage) {
+      buildQueueFromPassage(passage);
+      setJumpValue('');
+      setJumpError('');
+    }
+  }, [jumpValue, liveSlide, buildQueueFromPassage]);
 
   // Next slide is always the one after the live slide
   const displayNext = liveSlideIndex !== null
@@ -136,9 +165,25 @@ export function PresenterPanel() {
           </div>
           <span className="text-xs font-medium text-muted-foreground">Presenter</span>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {currentSlideIndex + 1} / {projectionQueue.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Verse #"
+              value={jumpValue}
+              onChange={e => { setJumpValue(e.target.value.replace(/\D/g, '')); setJumpError(''); }}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleJump(); } }}
+              className={cn('h-6 w-16 text-xs text-center', jumpError && 'border-destructive')}
+              title="Jump to verse"
+            />
+            {jumpError && <span className="text-[10px] text-destructive whitespace-nowrap">{jumpError}</span>}
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {currentSlideIndex + 1} / {projectionQueue.length}
+          </span>
+        </div>
       </div>
 
       {/* Slide stack with visual hierarchy */}
