@@ -166,7 +166,7 @@ export function PresenterPanel() {
           <span className="text-xs font-medium text-muted-foreground">Presenter</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" data-tutorial="jump">
             <Input
               type="text"
               inputMode="numeric"

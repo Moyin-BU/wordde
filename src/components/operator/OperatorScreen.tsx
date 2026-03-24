@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { OnboardingManager } from '@/components/onboarding/OnboardingManager';
+import { OnboardingManager, restartTutorial } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
@@ -13,7 +13,7 @@ import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
+import { Book, Monitor, ChevronDown, ChevronRight, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -179,29 +179,36 @@ export function OperatorScreen() {
 
       {/* Keyboard shortcut hint bar */}
       <footer className="border-t border-border bg-card/50 shrink-0">
-        <div className="px-4 py-1.5 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">→</kbd> Next
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">↑↓</kbd> Results
-          </span>
-          <span className="text-border">│</span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">C</kbd> Chapter
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">B</kbd> Blank
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⇧Enter</kbd> Next Passage
-          </span>
-          <span>
-            <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> Clear
-          </span>
+        <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+          <button
+            onClick={restartTutorial}
+            className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+            title="Restart Tutorial"
+          >
+            <HelpCircle className="h-3 w-3" />
+            <span>Tutorial</span>
+          </button>
+          <div className="flex items-center gap-4">
+            <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev
+            </span>
+            <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">→</kbd> Next
+            </span>
+            <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">↑↓</kbd> Results
+            </span>
+            <span className="text-border">│</span>
+            <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">N</kbd> Next Passage
+            </span>
+            <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">B</kbd> Blank
+            </span>
+            <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> Clear
+            </span>
+          </div>
         </div>
       </footer>
     </div>
