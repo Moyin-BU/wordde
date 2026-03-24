@@ -179,10 +179,15 @@ export function useGlobalKeyboard() {
           goToPreviousChapter();
           return;
 
+        case 'n':
+        case 'N':
+          event.preventDefault();
+          window.dispatchEvent(new CustomEvent('nextServicePlanPassage'));
+          return;
+
         case 'Enter':
           if (event.shiftKey) {
             event.preventDefault();
-            // Dispatch custom event for ServicePlan to handle
             window.dispatchEvent(new CustomEvent('nextServicePlanPassage'));
           }
           return;
