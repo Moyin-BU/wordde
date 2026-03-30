@@ -133,50 +133,84 @@ export function useGlobalKeyboard() {
     goToPreviousChapter,
   } = useStateManager();
 
+  // Store handlers in refs to avoid re-registering the listener
+  const handlersRef = useRef({
+    clearPreview,
+    commitCurrentSlide,
+    slideNext,
+    slidePrevious,
+    loadChapterAsQueue,
+    blankScreen,
+    goToNextChapter,
+    goToPreviousChapter,
+  });
+
+  // Keep refs current without re-registering the event listener
+  useEffect(() => {
+    handlersRef.current = {
+      clearPreview,
+      commitCurrentSlide,
+      slideNext,
+      slidePrevious,
+      loadChapterAsQueue,
+      blankScreen,
+      goToNextChapter,
+      goToPreviousChapter,
+    };
+  });
+
   useEffect(() => {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+
+      // Skip shortcuts when user is typing in an input field
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
         return;
       }
 
+      const h = handlersRef.current;
+
       switch (event.key) {
         case 'Escape':
-          clearPreview();
+          h.clearPreview();
           return;
 
         case 'ArrowRight':
           event.preventDefault();
-          slideNext();
-          commitCurrentSlide();
+          h.slideNext();
+          h.commitCurrentSlide();
           return;
 
         case 'ArrowLeft':
           event.preventDefault();
-          slidePrevious();
-          commitCurrentSlide();
+          h.slidePrevious();
+          h.commitCurrentSlide();
           return;
 
         case 'c':
         case 'C':
           event.preventDefault();
-          loadChapterAsQueue();
+          h.loadChapterAsQueue();
           return;
 
         case 'b':
         case 'B':
           event.preventDefault();
-          blankScreen();
+          h.blankScreen();
           return;
 
         case 'PageDown':
           event.preventDefault();
-          goToNextChapter();
+          h.goToNextChapter();
           return;
 
         case 'PageUp':
           event.preventDefault();
-          goToPreviousChapter();
+          h.goToPreviousChapter();
           return;
 
         case 'n':
@@ -196,5 +230,5 @@ export function useGlobalKeyboard() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [clearPreview, commitCurrentSlide, projectionQueue, slideNext, slidePrevious, loadChapterAsQueue, blankScreen, goToNextChapter, goToPreviousChapter]);
+  }, []); // Registered once, uses refs for current handlers
 }
