@@ -131,6 +131,7 @@ export function useGlobalKeyboard() {
     blankScreen,
     goToNextChapter,
     goToPreviousChapter,
+    returnToLastPassage,
   } = useStateManager();
 
   // Store handlers in refs to avoid re-registering the listener
@@ -143,6 +144,7 @@ export function useGlobalKeyboard() {
     blankScreen,
     goToNextChapter,
     goToPreviousChapter,
+    returnToLastPassage,
   });
 
   // Keep refs current without re-registering the event listener
