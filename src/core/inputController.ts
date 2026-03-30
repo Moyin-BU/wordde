@@ -2,7 +2,7 @@
 // Handles keyboard input and coordinates between UI, SearchEngine, and StateManager
 // Per MCD: Input mutates state only
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useStateManager } from './stateManager';
 import { SearchEngine } from './searchEngine';
 
