@@ -132,9 +132,9 @@ export function useGlobalKeyboard() {
     goToNextChapter,
     goToPreviousChapter,
     returnToLastPassage,
+    projectNow,
   } = useStateManager();
 
-  // Store handlers in refs to avoid re-registering the listener
   const handlersRef = useRef({
     clearPreview,
     commitCurrentSlide,
@@ -145,9 +145,9 @@ export function useGlobalKeyboard() {
     goToNextChapter,
     goToPreviousChapter,
     returnToLastPassage,
+    projectNow,
   });
 
-  // Keep refs current without re-registering the event listener
   useEffect(() => {
     handlersRef.current = {
       clearPreview,
@@ -159,6 +159,7 @@ export function useGlobalKeyboard() {
       goToNextChapter,
       goToPreviousChapter,
       returnToLastPassage,
+      projectNow,
     };
   });
 
