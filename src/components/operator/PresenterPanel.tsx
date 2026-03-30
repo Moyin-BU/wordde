@@ -186,6 +186,18 @@ export function PresenterPanel() {
           <span className="text-xs text-muted-foreground">
             {currentSlideIndex + 1} / {projectionQueue.length}
           </span>
+          {previousSlide && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs gap-1"
+              onClick={returnToLastPassage}
+              title="Return to last passage (R)"
+            >
+              <Undo2 className="h-3 w-3" />
+              Return
+            </Button>
+          )}
         </div>
       </div>
 

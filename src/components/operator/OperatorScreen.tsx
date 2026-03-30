@@ -206,6 +206,9 @@ export function OperatorScreen() {
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">B</kbd> Blank
             </span>
             <span>
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">R</kbd> Return
+            </span>
+            <span>
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Esc</kbd> Clear
             </span>
           </div>
