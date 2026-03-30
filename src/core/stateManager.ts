@@ -117,6 +117,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   // Projection queue state
   previousSlide: null,
+  projectionLocked: false,
   projectionQueue: [],
   currentSlideIndex: 0,
   liveSlideIndex: null,
