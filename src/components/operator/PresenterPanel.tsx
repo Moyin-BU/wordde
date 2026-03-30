@@ -171,8 +171,36 @@ export function PresenterPanel() {
             <Monitor className="h-3.5 w-3.5 text-primary" />
           </div>
           <span className="text-xs font-medium text-muted-foreground">Presenter</span>
+          {projectionLocked && (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-destructive/15 text-destructive text-[10px] font-semibold">
+              <Lock className="h-3 w-3" />
+              Locked
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant={projectionLocked ? 'destructive' : 'outline'}
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            onClick={toggleProjectionLock}
+            title={projectionLocked ? 'Unlock projection' : 'Lock projection'}
+          >
+            {projectionLocked ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {projectionLocked ? 'Unlock' : 'Lock'}
+          </Button>
+          {projectionLocked && (
+            <Button
+              variant="default"
+              size="sm"
+              className="h-6 px-2 text-xs gap-1"
+              onClick={projectNow}
+              title="Project now (P)"
+            >
+              <Send className="h-3 w-3" />
+              Project Now
+            </Button>
+          )}
           <div className="flex items-center gap-1" data-tutorial="jump">
             <Input
               type="text"
