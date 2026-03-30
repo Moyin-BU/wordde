@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
-import { Eye, Monitor, SkipForward, Undo2 } from 'lucide-react';
+import { Eye, Monitor, SkipForward, Undo2, Lock, Unlock, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { Slide } from '@/core/types';
@@ -92,12 +92,16 @@ export function PresenterPanel() {
     buildQueueFromPassage,
     previousSlide,
     returnToLastPassage,
+    projectionLocked,
+    toggleProjectionLock,
+    projectNow,
   } = useStateManager();
 
   const [jumpValue, setJumpValue] = useState('');
   const [jumpError, setJumpError] = useState('');
 
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+  const previewSlide = projectionLocked ? projectionQueue[currentSlideIndex] ?? null : null;
 
   const handleJump = useCallback(() => {
     const verseNum = jumpValue.trim();
@@ -167,8 +171,36 @@ export function PresenterPanel() {
             <Monitor className="h-3.5 w-3.5 text-primary" />
           </div>
           <span className="text-xs font-medium text-muted-foreground">Presenter</span>
+          {projectionLocked && (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-destructive/15 text-destructive text-[10px] font-semibold">
+              <Lock className="h-3 w-3" />
+              Locked
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant={projectionLocked ? 'destructive' : 'outline'}
+            size="sm"
+            className="h-6 px-2 text-xs gap-1"
+            onClick={toggleProjectionLock}
+            title={projectionLocked ? 'Unlock projection' : 'Lock projection'}
+          >
+            {projectionLocked ? <Unlock className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {projectionLocked ? 'Unlock' : 'Lock'}
+          </Button>
+          {projectionLocked && (
+            <Button
+              variant="default"
+              size="sm"
+              className="h-6 px-2 text-xs gap-1"
+              onClick={projectNow}
+              title="Project now (P)"
+            >
+              <Send className="h-3 w-3" />
+              Project Now
+            </Button>
+          )}
           <div className="flex items-center gap-1" data-tutorial="jump">
             <Input
               type="text"
@@ -204,6 +236,16 @@ export function PresenterPanel() {
       {/* Slide stack with visual hierarchy */}
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
+        {projectionLocked && previewSlide && previewSlide !== liveSlide && (
+          <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Preview (not projected)</span>
+            </div>
+            <p className="scripture-reference text-reference text-sm mb-1">{previewSlide.reference}</p>
+            <p className="scripture-text leading-relaxed text-scripture text-lg">{previewSlide.text}</p>
+          </div>
+        )}
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
         
       </div>

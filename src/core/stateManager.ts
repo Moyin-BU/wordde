@@ -42,6 +42,12 @@ interface StateManager extends AppState {
   // Return to last passage
   previousSlide: Slide | null;
   returnToLastPassage: () => void;
+
+  // Projection lock
+  projectionLocked: boolean;
+  toggleProjectionLock: () => void;
+  projectNow: () => void;
+
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
@@ -111,6 +117,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   // Projection queue state
   previousSlide: null,
+  projectionLocked: false,
   projectionQueue: [],
   currentSlideIndex: 0,
   liveSlideIndex: null,
@@ -308,41 +315,72 @@ export const useStateManager = create<StateManager>((set, get) => ({
     get().buildQueueFromPassage(passage);
   },
 
-  commitCurrentSlide: () => {
+  toggleProjectionLock: () => {
+    set({ projectionLocked: !get().projectionLocked });
+  },
+
+  projectNow: () => {
     const { projectionQueue, currentSlideIndex, liveSlideIndex } = get();
     const slide = projectionQueue[currentSlideIndex];
     if (!slide) return;
-    // Track previous slide for "return to last passage"
     const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
       set({ previousSlide: oldLiveSlide });
     }
     const passage = slideToPassage(slide);
-    set({
-      liveSlideIndex: currentSlideIndex,
-      committedPassage: passage,
-      isScreenBlanked: false,
-    });
+    set({ liveSlideIndex: currentSlideIndex, committedPassage: passage, isScreenBlanked: false });
     broadcastCommit(passage);
-    // Persist for refresh-safe projection
     persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
-    // Track in recent passages — single source of truth for all projection paths
     get().addToRecent(slide.reference);
-
-    // Pre-load next slide if at end of queue to ensure Next preview is never blank
+    // Pre-load next slide
     if (currentSlideIndex >= projectionQueue.length - 1) {
       const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
       if (nextPos) {
         const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
         if (verse) {
-          const nextSlide: Slide = {
-            reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
-            text: verse.text,
-            book: nextPos.book,
-            chapter: nextPos.chapter,
-            verse: nextPos.verse,
-          };
-          set({ projectionQueue: [...get().projectionQueue, nextSlide] });
+          set({ projectionQueue: [...get().projectionQueue, { reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`, text: verse.text, book: nextPos.book, chapter: nextPos.chapter, verse: nextPos.verse }] });
+        }
+      }
+    }
+  },
+
+  commitCurrentSlide: () => {
+    const { projectionQueue, currentSlideIndex, liveSlideIndex, projectionLocked } = get();
+    const slide = projectionQueue[currentSlideIndex];
+    if (!slide) return;
+
+    // When locked, only update preview — do NOT broadcast to projection
+    if (projectionLocked) {
+      // Pre-load next slide for preview
+      if (currentSlideIndex >= projectionQueue.length - 1) {
+        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+        if (nextPos) {
+          const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
+          if (verse) {
+            set({ projectionQueue: [...get().projectionQueue, { reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`, text: verse.text, book: nextPos.book, chapter: nextPos.chapter, verse: nextPos.verse }] });
+          }
+        }
+      }
+      return;
+    }
+
+    // Normal (unlocked) projection
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+    if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
+      set({ previousSlide: oldLiveSlide });
+    }
+    const passage = slideToPassage(slide);
+    set({ liveSlideIndex: currentSlideIndex, committedPassage: passage, isScreenBlanked: false });
+    broadcastCommit(passage);
+    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
+    get().addToRecent(slide.reference);
+    // Pre-load next slide
+    if (currentSlideIndex >= projectionQueue.length - 1) {
+      const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+      if (nextPos) {
+        const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
+        if (verse) {
+          set({ projectionQueue: [...get().projectionQueue, { reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`, text: verse.text, book: nextPos.book, chapter: nextPos.chapter, verse: nextPos.verse }] });
         }
       }
     }
