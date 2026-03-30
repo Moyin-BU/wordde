@@ -2,8 +2,9 @@ import { useState, useCallback } from 'react';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
-import { Eye, Monitor, SkipForward } from 'lucide-react';
+import { Eye, Monitor, SkipForward, Undo2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import type { Slide } from '@/core/types';
 
 function SlideCard({
