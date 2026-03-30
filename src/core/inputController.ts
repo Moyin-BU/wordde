@@ -158,6 +158,7 @@ export function useGlobalKeyboard() {
       blankScreen,
       goToNextChapter,
       goToPreviousChapter,
+      returnToLastPassage,
     };
   });
 
