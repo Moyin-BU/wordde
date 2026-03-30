@@ -236,6 +236,16 @@ export function PresenterPanel() {
       {/* Slide stack with visual hierarchy */}
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
+        {projectionLocked && previewSlide && previewSlide !== liveSlide && (
+          <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Preview (not projected)</span>
+            </div>
+            <p className="scripture-reference text-reference text-sm mb-1">{previewSlide.reference}</p>
+            <p className="scripture-text leading-relaxed text-scripture text-lg">{previewSlide.text}</p>
+          </div>
+        )}
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
         
       </div>
