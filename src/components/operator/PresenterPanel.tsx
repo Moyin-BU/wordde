@@ -92,6 +92,9 @@ export function PresenterPanel() {
     buildQueueFromPassage,
     previousSlide,
     returnToLastPassage,
+    projectionLocked,
+    toggleProjectionLock,
+    projectNow,
   } = useStateManager();
 
   const [jumpValue, setJumpValue] = useState('');
