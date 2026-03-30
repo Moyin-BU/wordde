@@ -90,6 +90,8 @@ export function PresenterPanel() {
     liveSlideIndex,
     isScreenBlanked,
     buildQueueFromPassage,
+    previousSlide,
+    returnToLastPassage,
   } = useStateManager();
 
   const [jumpValue, setJumpValue] = useState('');
