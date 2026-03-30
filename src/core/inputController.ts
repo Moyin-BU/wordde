@@ -217,6 +217,12 @@ export function useGlobalKeyboard() {
           h.goToPreviousChapter();
           return;
 
+        case 'p':
+        case 'P':
+          event.preventDefault();
+          h.projectNow();
+          return;
+
         case 'r':
         case 'R':
           event.preventDefault();
