@@ -38,6 +38,10 @@ interface StateManager extends AppState {
   addToRecent: (reference: string) => void;
   removeFromRecent: (reference: string) => void;
   clearAllRecent: () => void;
+
+  // Return to last passage
+  previousSlide: Slide | null;
+  returnToLastPassage: () => void;
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
@@ -106,6 +110,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
   isBibleLoaded: false,
 
   // Projection queue state
+  previousSlide: null,
   projectionQueue: [],
   currentSlideIndex: 0,
   liveSlideIndex: null,
@@ -296,10 +301,22 @@ export const useStateManager = create<StateManager>((set, get) => ({
     }
   },
 
+  returnToLastPassage: () => {
+    const { previousSlide } = get();
+    if (!previousSlide) return;
+    const passage = slideToPassage(previousSlide);
+    get().buildQueueFromPassage(passage);
+  },
+
   commitCurrentSlide: () => {
-    const { projectionQueue, currentSlideIndex } = get();
+    const { projectionQueue, currentSlideIndex, liveSlideIndex } = get();
     const slide = projectionQueue[currentSlideIndex];
     if (!slide) return;
+    // Track previous slide for "return to last passage"
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+    if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
+      set({ previousSlide: oldLiveSlide });
+    }
     const passage = slideToPassage(slide);
     set({
       liveSlideIndex: currentSlideIndex,

@@ -2,8 +2,9 @@ import { useState, useCallback } from 'react';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
 import { cn } from '@/lib/utils';
-import { Eye, Monitor, SkipForward } from 'lucide-react';
+import { Eye, Monitor, SkipForward, Undo2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import type { Slide } from '@/core/types';
 
 function SlideCard({
@@ -89,6 +90,8 @@ export function PresenterPanel() {
     liveSlideIndex,
     isScreenBlanked,
     buildQueueFromPassage,
+    previousSlide,
+    returnToLastPassage,
   } = useStateManager();
 
   const [jumpValue, setJumpValue] = useState('');
@@ -183,6 +186,18 @@ export function PresenterPanel() {
           <span className="text-xs text-muted-foreground">
             {currentSlideIndex + 1} / {projectionQueue.length}
           </span>
+          {previousSlide && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs gap-1"
+              onClick={returnToLastPassage}
+              title="Return to last passage (R)"
+            >
+              <Undo2 className="h-3 w-3" />
+              Return
+            </Button>
+          )}
         </div>
       </div>
 
