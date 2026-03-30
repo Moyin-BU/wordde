@@ -101,6 +101,7 @@ export function PresenterPanel() {
   const [jumpError, setJumpError] = useState('');
 
   const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+  const previewSlide = projectionLocked ? projectionQueue[currentSlideIndex] ?? null : null;
 
   const handleJump = useCallback(() => {
     const verseNum = jumpValue.trim();
