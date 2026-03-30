@@ -42,6 +42,12 @@ interface StateManager extends AppState {
   // Return to last passage
   previousSlide: Slide | null;
   returnToLastPassage: () => void;
+
+  // Projection lock
+  projectionLocked: boolean;
+  toggleProjectionLock: () => void;
+  projectNow: () => void;
+
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
