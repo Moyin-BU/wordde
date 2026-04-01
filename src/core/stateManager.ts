@@ -39,9 +39,11 @@ interface StateManager extends AppState {
   removeFromRecent: (reference: string) => void;
   clearAllRecent: () => void;
 
-  // Return to last passage
+  // Projection history (multi-step undo)
+  historyStack: Slide[];
   previousSlide: Slide | null;
   returnToLastPassage: () => void;
+  undoProjection: () => void;
 
   // Projection lock
   projectionLocked: boolean;
