@@ -39,9 +39,11 @@ interface StateManager extends AppState {
   removeFromRecent: (reference: string) => void;
   clearAllRecent: () => void;
 
-  // Return to last passage
+  // Projection history (multi-step undo)
+  historyStack: Slide[];
   previousSlide: Slide | null;
   returnToLastPassage: () => void;
+  undoProjection: () => void;
 
   // Projection lock
   projectionLocked: boolean;
@@ -116,6 +118,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
   isBibleLoaded: false,
 
   // Projection queue state
+  historyStack: [],
   previousSlide: null,
   projectionLocked: false,
   projectionQueue: [],
@@ -315,6 +318,17 @@ export const useStateManager = create<StateManager>((set, get) => ({
     get().buildQueueFromPassage(passage);
   },
 
+  undoProjection: () => {
+    const { historyStack } = get();
+    if (historyStack.length === 0) return;
+    const last = historyStack[historyStack.length - 1];
+    // Pop from history without pushing current back (true undo)
+    set({ historyStack: historyStack.slice(0, -1) });
+    const passage = slideToPassage(last);
+    // Build queue and project — buildQueueFromPassage will push current live to history
+    get().buildQueueFromPassage(passage);
+  },
+
   toggleProjectionLock: () => {
     set({ projectionLocked: !get().projectionLocked });
   },
@@ -325,7 +339,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (!slide) return;
     const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
-      set({ previousSlide: oldLiveSlide });
+      const { historyStack } = get();
+      set({ previousSlide: oldLiveSlide, historyStack: [...historyStack, oldLiveSlide].slice(-10) });
     }
     const passage = slideToPassage(slide);
     set({ liveSlideIndex: currentSlideIndex, committedPassage: passage, isScreenBlanked: false });
@@ -367,7 +382,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
     // Normal (unlocked) projection
     const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
-      set({ previousSlide: oldLiveSlide });
+      const { historyStack } = get();
+      set({ previousSlide: oldLiveSlide, historyStack: [...historyStack, oldLiveSlide].slice(-10) });
     }
     const passage = slideToPassage(slide);
     set({ liveSlideIndex: currentSlideIndex, committedPassage: passage, isScreenBlanked: false });

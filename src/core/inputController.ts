@@ -133,6 +133,7 @@ export function useGlobalKeyboard() {
     goToPreviousChapter,
     returnToLastPassage,
     projectNow,
+    undoProjection,
   } = useStateManager();
 
   const handlersRef = useRef({
@@ -146,6 +147,7 @@ export function useGlobalKeyboard() {
     goToPreviousChapter,
     returnToLastPassage,
     projectNow,
+    undoProjection,
   });
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export function useGlobalKeyboard() {
       goToPreviousChapter,
       returnToLastPassage,
       projectNow,
+      undoProjection,
     };
   });
 
@@ -179,9 +182,16 @@ export function useGlobalKeyboard() {
       const h = handlersRef.current;
 
       switch (event.key) {
-        case 'Escape':
-          h.clearPreview();
+        case 'z':
+        case 'Z':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            h.undoProjection();
+            return;
+          }
           return;
+
+        case 'Escape':
 
         case 'ArrowRight':
           event.preventDefault();
