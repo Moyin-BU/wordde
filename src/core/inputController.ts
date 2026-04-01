@@ -133,6 +133,7 @@ export function useGlobalKeyboard() {
     goToPreviousChapter,
     returnToLastPassage,
     projectNow,
+    undoProjection,
   } = useStateManager();
 
   const handlersRef = useRef({
@@ -146,6 +147,7 @@ export function useGlobalKeyboard() {
     goToPreviousChapter,
     returnToLastPassage,
     projectNow,
+    undoProjection,
   });
 
   useEffect(() => {
@@ -160,6 +162,7 @@ export function useGlobalKeyboard() {
       goToPreviousChapter,
       returnToLastPassage,
       projectNow,
+      undoProjection,
     };
   });
 
