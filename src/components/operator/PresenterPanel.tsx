@@ -92,8 +92,6 @@ export function PresenterPanel() {
     liveSlideIndex,
     isScreenBlanked,
     buildQueueFromPassage,
-    previousSlide,
-    returnToLastPassage,
     projectionLocked,
     toggleProjectionLock,
     projectNow,
