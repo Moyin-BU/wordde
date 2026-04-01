@@ -118,6 +118,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
   isBibleLoaded: false,
 
   // Projection queue state
+  historyStack: [],
   previousSlide: null,
   projectionLocked: false,
   projectionQueue: [],
