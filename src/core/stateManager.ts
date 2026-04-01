@@ -318,6 +318,17 @@ export const useStateManager = create<StateManager>((set, get) => ({
     get().buildQueueFromPassage(passage);
   },
 
+  undoProjection: () => {
+    const { historyStack } = get();
+    if (historyStack.length === 0) return;
+    const last = historyStack[historyStack.length - 1];
+    // Pop from history without pushing current back (true undo)
+    set({ historyStack: historyStack.slice(0, -1) });
+    const passage = slideToPassage(last);
+    // Build queue and project — buildQueueFromPassage will push current live to history
+    get().buildQueueFromPassage(passage);
+  },
+
   toggleProjectionLock: () => {
     set({ projectionLocked: !get().projectionLocked });
   },
