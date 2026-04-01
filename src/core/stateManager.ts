@@ -7,6 +7,15 @@ import type { AppState, Passage, Slide, SearchResult } from './types';
 import { BibleRepository } from './bibleRepository';
 import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings, persistProjectionState } from './broadcastSync';
 
+/**
+ * Determines if two slides belong to the same reference group (same book + chapter).
+ * Verse-to-verse navigation within the same chapter should NOT push to the undo stack.
+ */
+function isSameReferenceGroup(a: Slide | null, b: Slide | null): boolean {
+  if (!a || !b) return false;
+  return a.book === b.book && a.chapter === b.chapter;
+}
+
 interface StateManager extends AppState {
   // State mutation methods
   setSearchQuery: (query: string) => void;
@@ -39,7 +48,7 @@ interface StateManager extends AppState {
   removeFromRecent: (reference: string) => void;
   clearAllRecent: () => void;
 
-  // Projection history (multi-step undo)
+  // Projection history (reference-level undo)
   historyStack: Slide[];
   previousSlide: Slide | null;
   returnToLastPassage: () => void;
@@ -80,8 +89,8 @@ function passageToSlides(passage: Passage): Slide[] {
   }));
 }
 
-function chapterToSlides(book: string, chapter: string): Slide[] {
-  const verses = BibleRepository.getVerses(book, chapter);
+function chapterToSlides(book: string, chapter: string, translation?: string): Slide[] {
+  const verses = BibleRepository.getVerses(book, chapter, translation);
   return verses.map((v) => ({
     reference: `${book} ${chapter}:${v.verse}`,
     text: v.text,
@@ -91,18 +100,75 @@ function chapterToSlides(book: string, chapter: string): Slide[] {
   }));
 }
 
-function slideToPassage(slide: Slide): Passage {
+function slideToPassage(slide: Slide, translation: string = 'KJV'): Passage {
   return {
     reference: {
       book: slide.book,
       chapter: slide.chapter,
       verseStart: slide.verse,
-      translation: 'KJV',
+      translation,
     },
     displayReference: slide.reference,
     text: slide.text,
     verses: [{ verse: slide.verse, text: slide.text }],
   };
+}
+
+/**
+ * Core projection function: updates history stack using reference grouping,
+ * then broadcasts the slide to the projection screen.
+ */
+function projectSlide(
+  slide: Slide,
+  currentSlideIndex: number,
+  get: () => StateManager,
+  set: (partial: Partial<StateManager>) => void,
+) {
+  const { liveSlideIndex, projectionQueue, historyStack, currentTranslation } = get();
+  const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+
+  // Only push to history if transitioning to a DIFFERENT passage (book/chapter)
+  if (oldLiveSlide && !isSameReferenceGroup(oldLiveSlide, slide)) {
+    set({
+      previousSlide: oldLiveSlide,
+      historyStack: [...historyStack, oldLiveSlide].slice(-10),
+    });
+  } else if (oldLiveSlide) {
+    // Same chapter — still track as "previous" for Return but NOT in undo stack
+    set({ previousSlide: oldLiveSlide });
+  }
+
+  const passage = slideToPassage(slide, currentTranslation);
+  set({
+    liveSlideIndex: currentSlideIndex,
+    committedPassage: passage,
+    isScreenBlanked: false,
+  });
+  broadcastCommit(passage);
+  persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
+  get().addToRecent(slide.reference);
+
+  // Pre-load next slide
+  if (currentSlideIndex >= get().projectionQueue.length - 1) {
+    const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+    if (nextPos) {
+      const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
+      if (verse) {
+        set({
+          projectionQueue: [
+            ...get().projectionQueue,
+            {
+              reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
+              text: verse.text,
+              book: nextPos.book,
+              chapter: nextPos.chapter,
+              verse: nextPos.verse,
+            },
+          ],
+        });
+      }
+    }
+  }
 }
 
 export const useStateManager = create<StateManager>((set, get) => ({
@@ -160,7 +226,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
       set({ previewPassage: passage });
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
-      // Auto-project immediately
       get().commitCurrentSlide();
     } else {
       set({ previewPassage: null, projectionQueue: [], currentSlideIndex: 0 });
@@ -172,7 +237,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (passage) {
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
-      // Auto-project immediately
       get().commitCurrentSlide();
     }
   },
@@ -188,13 +252,11 @@ export const useStateManager = create<StateManager>((set, get) => ({
         projectionQueue: slides,
         currentSlideIndex: 0,
       });
-      // Auto-project immediately
       get().commitCurrentSlide();
     }
   },
 
   commitPassage: () => {
-    // Commit the current slide in the queue
     get().commitCurrentSlide();
   },
 
@@ -209,7 +271,28 @@ export const useStateManager = create<StateManager>((set, get) => ({
     });
   },
 
-  setTranslation: (translation) => set({ currentTranslation: translation }),
+  setTranslation: (translation) => {
+    set({ currentTranslation: translation });
+    BibleRepository.setCurrentTranslation(translation);
+
+    // If there's a live slide, re-project it in the new translation
+    const { projectionQueue, liveSlideIndex } = get();
+    const liveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+    if (liveSlide) {
+      const passage = BibleRepository.getPassage({
+        book: liveSlide.book,
+        chapter: liveSlide.chapter,
+        verseStart: liveSlide.verse,
+        translation,
+      });
+      if (passage) {
+        const slides = passageToSlides(passage);
+        set({ projectionQueue: slides, currentSlideIndex: 0 });
+        get().commitCurrentSlide();
+      }
+    }
+  },
+
   setLoading: (loading) => set({ isLoading: loading }),
   setBibleLoaded: (loaded) => set({ isBibleLoaded: loaded }),
 
@@ -248,28 +331,26 @@ export const useStateManager = create<StateManager>((set, get) => ({
   buildQueueFromPassage: (passage) => {
     const slides = passageToSlides(passage);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    // Auto-project immediately (commitCurrentSlide handles addToRecent)
     get().commitCurrentSlide();
   },
 
   buildQueueFromChapter: (book, chapter) => {
-    const slides = chapterToSlides(book, chapter);
+    const { currentTranslation } = get();
+    const slides = chapterToSlides(book, chapter, currentTranslation);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    // Auto-project immediately (commitCurrentSlide handles addToRecent)
     get().commitCurrentSlide();
   },
 
   slideNext: () => {
-    const { currentSlideIndex, projectionQueue } = get();
+    const { currentSlideIndex, projectionQueue, currentTranslation } = get();
     if (currentSlideIndex < projectionQueue.length - 1) {
       set({ currentSlideIndex: currentSlideIndex + 1 });
     } else {
-      // At end of queue: extend by loading next verse
       const lastSlide = projectionQueue[projectionQueue.length - 1];
       if (!lastSlide) return;
       const nextPos = BibleRepository.getNextVerse(lastSlide.book, lastSlide.chapter, lastSlide.verse);
       if (!nextPos) return;
-      const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
+      const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
       if (!verse) return;
       const newSlide: Slide = {
         reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
@@ -286,16 +367,15 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   slidePrevious: () => {
-    const { currentSlideIndex, projectionQueue } = get();
+    const { currentSlideIndex, projectionQueue, currentTranslation } = get();
     if (currentSlideIndex > 0) {
       set({ currentSlideIndex: currentSlideIndex - 1 });
     } else {
-      // At start of queue: prepend previous verse
       const firstSlide = projectionQueue[0];
       if (!firstSlide) return;
       const prevPos = BibleRepository.getPreviousVerse(firstSlide.book, firstSlide.chapter, firstSlide.verse);
       if (!prevPos) return;
-      const verse = BibleRepository.getVerse(prevPos.book, prevPos.chapter, prevPos.verse);
+      const verse = BibleRepository.getVerse(prevPos.book, prevPos.chapter, prevPos.verse, currentTranslation);
       if (!verse) return;
       const newSlide: Slide = {
         reference: `${prevPos.book} ${prevPos.chapter}:${prevPos.verse}`,
@@ -306,26 +386,45 @@ export const useStateManager = create<StateManager>((set, get) => ({
       };
       set({
         projectionQueue: [newSlide, ...projectionQueue],
-        currentSlideIndex: 0, // stay on the newly prepended slide
+        currentSlideIndex: 0,
       });
     }
   },
 
   returnToLastPassage: () => {
-    const { previousSlide } = get();
+    const { previousSlide, projectionQueue, liveSlideIndex } = get();
     if (!previousSlide) return;
-    const passage = slideToPassage(previousSlide);
-    get().buildQueueFromPassage(passage);
+
+    // Swap: save current live slide as the new "previous"
+    const currentLive = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+    const { currentTranslation } = get();
+    const passage = slideToPassage(previousSlide, currentTranslation);
+    const slides = passageToSlides(passage);
+
+    set({
+      previousSlide: currentLive,
+      projectionQueue: slides,
+      currentSlideIndex: 0,
+    });
+
+    // Project immediately (bypass normal history push since this is a toggle)
+    const slide = slides[0];
+    if (slide) {
+      const p = slideToPassage(slide, currentTranslation);
+      set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
+      broadcastCommit(p);
+      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
+      get().addToRecent(slide.reference);
+    }
   },
 
   undoProjection: () => {
-    const { historyStack } = get();
+    const { historyStack, currentTranslation } = get();
     if (historyStack.length === 0) return;
     const last = historyStack[historyStack.length - 1];
     // Pop from history without pushing current back (true undo)
     set({ historyStack: historyStack.slice(0, -1) });
-    const passage = slideToPassage(last);
-    // Build queue and project — buildQueueFromPassage will push current live to history
+    const passage = slideToPassage(last, currentTranslation);
     get().buildQueueFromPassage(passage);
   },
 
@@ -334,72 +433,44 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   projectNow: () => {
-    const { projectionQueue, currentSlideIndex, liveSlideIndex } = get();
+    const { projectionQueue, currentSlideIndex } = get();
     const slide = projectionQueue[currentSlideIndex];
     if (!slide) return;
-    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
-    if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
-      const { historyStack } = get();
-      set({ previousSlide: oldLiveSlide, historyStack: [...historyStack, oldLiveSlide].slice(-10) });
-    }
-    const passage = slideToPassage(slide);
-    set({ liveSlideIndex: currentSlideIndex, committedPassage: passage, isScreenBlanked: false });
-    broadcastCommit(passage);
-    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
-    get().addToRecent(slide.reference);
-    // Pre-load next slide
-    if (currentSlideIndex >= projectionQueue.length - 1) {
-      const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
-      if (nextPos) {
-        const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
-        if (verse) {
-          set({ projectionQueue: [...get().projectionQueue, { reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`, text: verse.text, book: nextPos.book, chapter: nextPos.chapter, verse: nextPos.verse }] });
-        }
-      }
-    }
+    projectSlide(slide, currentSlideIndex, get, set);
   },
 
   commitCurrentSlide: () => {
-    const { projectionQueue, currentSlideIndex, liveSlideIndex, projectionLocked } = get();
+    const { projectionQueue, currentSlideIndex, projectionLocked, currentTranslation } = get();
     const slide = projectionQueue[currentSlideIndex];
     if (!slide) return;
 
-    // When locked, only update preview — do NOT broadcast to projection
+    // When locked, only update preview — do NOT broadcast
     if (projectionLocked) {
-      // Pre-load next slide for preview
       if (currentSlideIndex >= projectionQueue.length - 1) {
         const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
         if (nextPos) {
-          const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
+          const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
           if (verse) {
-            set({ projectionQueue: [...get().projectionQueue, { reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`, text: verse.text, book: nextPos.book, chapter: nextPos.chapter, verse: nextPos.verse }] });
+            set({
+              projectionQueue: [
+                ...get().projectionQueue,
+                {
+                  reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
+                  text: verse.text,
+                  book: nextPos.book,
+                  chapter: nextPos.chapter,
+                  verse: nextPos.verse,
+                },
+              ],
+            });
           }
         }
       }
       return;
     }
 
-    // Normal (unlocked) projection
-    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
-    if (oldLiveSlide && (oldLiveSlide.book !== slide.book || oldLiveSlide.chapter !== slide.chapter || oldLiveSlide.verse !== slide.verse)) {
-      const { historyStack } = get();
-      set({ previousSlide: oldLiveSlide, historyStack: [...historyStack, oldLiveSlide].slice(-10) });
-    }
-    const passage = slideToPassage(slide);
-    set({ liveSlideIndex: currentSlideIndex, committedPassage: passage, isScreenBlanked: false });
-    broadcastCommit(passage);
-    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
-    get().addToRecent(slide.reference);
-    // Pre-load next slide
-    if (currentSlideIndex >= projectionQueue.length - 1) {
-      const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
-      if (nextPos) {
-        const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse);
-        if (verse) {
-          set({ projectionQueue: [...get().projectionQueue, { reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`, text: verse.text, book: nextPos.book, chapter: nextPos.chapter, verse: nextPos.verse }] });
-        }
-      }
-    }
+    // Normal (unlocked) projection through single entry point
+    projectSlide(slide, currentSlideIndex, get, set);
   },
 
   blankScreen: () => {
@@ -417,24 +488,22 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   loadChapterAsQueue: () => {
-    const { projectionQueue, currentSlideIndex, previewPassage } = get();
-    // Determine which book/chapter from current slide or preview
+    const { projectionQueue, currentSlideIndex, previewPassage, currentTranslation } = get();
     const slide = projectionQueue[currentSlideIndex];
     const book = slide?.book || previewPassage?.reference.book;
     const chapter = slide?.chapter || previewPassage?.reference.chapter;
     if (!book || !chapter) return;
 
-    const slides = chapterToSlides(book, chapter);
+    const slides = chapterToSlides(book, chapter, currentTranslation);
     if (slides.length === 0) return;
 
-    // Commit entire chapter as a single passage to projector
-    const verses = BibleRepository.getVerses(book, chapter);
+    const verses = BibleRepository.getVerses(book, chapter, currentTranslation);
     const chapterPassage = BibleRepository.getPassage({
       book,
       chapter,
       verseStart: '1',
       verseEnd: String(verses.length),
-      translation: get().currentTranslation,
+      translation: currentTranslation,
     });
 
     set({
@@ -449,7 +518,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     }
   },
 
-  // === Legacy navigation methods (kept for header nav buttons) ===
+  // === Legacy navigation methods ===
   goToNextVerse: () => {
     get().slideNext();
     get().commitCurrentSlide();
@@ -464,13 +533,13 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const { book, chapter } = committedPassage.reference;
     const chapterNum = parseInt(chapter, 10);
     const nextChapter = String(chapterNum + 1);
-    const nextChapterVerses = BibleRepository.getVerses(book, nextChapter);
+    const nextChapterVerses = BibleRepository.getVerses(book, nextChapter, currentTranslation);
     if (nextChapterVerses.length > 0) {
-      const slides = chapterToSlides(book, nextChapter);
+      const slides = chapterToSlides(book, nextChapter, currentTranslation);
       const passage = BibleRepository.getPassage({ book, chapter: nextChapter, verseStart: '1', translation: currentTranslation });
       if (passage) {
-        set({ projectionQueue: slides, currentSlideIndex: 0, liveSlideIndex: 0, committedPassage: passage, isScreenBlanked: false });
-        broadcastCommit(passage);
+        set({ projectionQueue: slides, currentSlideIndex: 0 });
+        get().commitCurrentSlide();
       }
       return;
     }
@@ -480,11 +549,11 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const nextBook = allBooks[bookIndex + 1];
       const chapters = BibleRepository.getChapters(nextBook);
       if (chapters.length > 0) {
-        const slides = chapterToSlides(nextBook, chapters[0]);
+        const slides = chapterToSlides(nextBook, chapters[0], currentTranslation);
         const passage = BibleRepository.getPassage({ book: nextBook, chapter: chapters[0], verseStart: '1', translation: currentTranslation });
         if (passage) {
-          set({ projectionQueue: slides, currentSlideIndex: 0, liveSlideIndex: 0, committedPassage: passage, isScreenBlanked: false });
-          broadcastCommit(passage);
+          set({ projectionQueue: slides, currentSlideIndex: 0 });
+          get().commitCurrentSlide();
         }
       }
     }
@@ -496,11 +565,11 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const chapterNum = parseInt(chapter, 10);
     if (chapterNum > 1) {
       const prevChapter = String(chapterNum - 1);
-      const slides = chapterToSlides(book, prevChapter);
+      const slides = chapterToSlides(book, prevChapter, currentTranslation);
       const passage = BibleRepository.getPassage({ book, chapter: prevChapter, verseStart: '1', translation: currentTranslation });
       if (passage) {
-        set({ projectionQueue: slides, currentSlideIndex: 0, liveSlideIndex: 0, committedPassage: passage, isScreenBlanked: false });
-        broadcastCommit(passage);
+        set({ projectionQueue: slides, currentSlideIndex: 0 });
+        get().commitCurrentSlide();
       }
       return;
     }
@@ -511,11 +580,11 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const chapters = BibleRepository.getChapters(prevBook);
       if (chapters.length > 0) {
         const lastChapter = chapters[chapters.length - 1];
-        const slides = chapterToSlides(prevBook, lastChapter);
+        const slides = chapterToSlides(prevBook, lastChapter, currentTranslation);
         const passage = BibleRepository.getPassage({ book: prevBook, chapter: lastChapter, verseStart: '1', translation: currentTranslation });
         if (passage) {
-          set({ projectionQueue: slides, currentSlideIndex: 0, liveSlideIndex: 0, committedPassage: passage, isScreenBlanked: false });
-          broadcastCommit(passage);
+          set({ projectionQueue: slides, currentSlideIndex: 0 });
+          get().commitCurrentSlide();
         }
       }
     }
