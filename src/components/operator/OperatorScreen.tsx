@@ -31,7 +31,7 @@ export function OperatorScreen() {
     clearPreview,
   } = useInputController();
 
-  const { committedPassage, isLoading, isBibleLoaded, setBibleLoaded, setLoading, isScreenBlanked } = useStateManager();
+  const { committedPassage, isLoading, isBibleLoaded, setBibleLoaded, setLoading, isScreenBlanked, currentTranslation, setTranslation } = useStateManager();
 
   useGlobalKeyboard();
 
@@ -39,7 +39,8 @@ export function OperatorScreen() {
     if (!isBibleLoaded) {
       setLoading(true);
       Promise.all([
-        BibleRepository.loadFromZip('/data/KJV_Bible_JSON.zip'),
+        BibleRepository.loadTranslation('KJV'),
+        BibleRepository.loadTranslation('NIV'),
         SearchEngine.loadSemanticIndex('/data/semanticIndex.json'),
       ])
         .then(() => {
@@ -82,9 +83,16 @@ export function OperatorScreen() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-medium">
-                KJV
-              </span>
+              <select
+                value={currentTranslation}
+                onChange={(e) => setTranslation(e.target.value)}
+                className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-medium border-none outline-none cursor-pointer"
+                title="Switch translation"
+              >
+                {BibleRepository.getAvailableTranslations().map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
 
               {committedPassage && (
                 <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">

@@ -1,36 +1,74 @@
 // Bible Projection App - Bible Repository
 // Read-only access layer for Bible data
-// Per PRD: BibleRepository is the ONLY module allowed to read Bible JSON files
+// Supports multiple translations (KJV, NIV, etc.)
 
 import JSZip from 'jszip';
 import type { BibleBook, Passage, PassageReference, Verse } from './types';
 
+/** Map of translation code → zip file path */
+const TRANSLATION_ZIPS: Record<string, string> = {
+  KJV: '/data/KJV_Bible_JSON.zip',
+  NIV: '/data/NIV_Bible_JSON.zip',
+};
+
 class BibleRepositoryClass {
-  private books: Map<string, BibleBook> = new Map();
+  /** Per-translation book data */
+  private translations: Map<string, Map<string, BibleBook>> = new Map();
+  /** Canonical book order (same across translations) */
   private bookNames: string[] = [];
-  private isLoaded: boolean = false;
+  private loadedTranslations: Set<string> = new Set();
   private currentTranslation: string = 'KJV';
-  
-  // Book name normalization map for flexible search
+
+  // Book name normalization map
   private bookAliases: Map<string, string> = new Map();
-  
-  async loadFromZip(zipPath: string): Promise<void> {
+
+  /** Get list of available translation codes */
+  getAvailableTranslations(): string[] {
+    return Object.keys(TRANSLATION_ZIPS);
+  }
+
+  /** Get currently loaded translations */
+  getLoadedTranslations(): string[] {
+    return [...this.loadedTranslations];
+  }
+
+  setCurrentTranslation(translation: string) {
+    this.currentTranslation = translation;
+  }
+
+  getCurrentTranslation(): string {
+    return this.currentTranslation;
+  }
+
+  /**
+   * Load a single translation from its zip file.
+   * Can be called multiple times for different translations.
+   */
+  async loadTranslation(translation: string): Promise<void> {
+    if (this.loadedTranslations.has(translation)) return;
+
+    const zipPath = TRANSLATION_ZIPS[translation];
+    if (!zipPath) throw new Error(`Unknown translation: ${translation}`);
+
     try {
       const response = await fetch(zipPath);
       const zipData = await response.arrayBuffer();
       const zip = await JSZip.loadAsync(zipData);
-      
+
+      const booksMap = new Map<string, BibleBook>();
       const bookPromises: Promise<void>[] = [];
-      
+
       zip.forEach((relativePath, file) => {
         if (relativePath.endsWith('.json') && !file.dir) {
           const promise = file.async('text').then((content) => {
             try {
               const bookData: BibleBook = JSON.parse(content);
               if (bookData.book && bookData.chapters) {
-                this.books.set(bookData.book.toLowerCase(), bookData);
-                this.bookNames.push(bookData.book);
-                this.setupBookAliases(bookData.book);
+                booksMap.set(bookData.book.toLowerCase(), bookData);
+                // Only populate bookNames and aliases from first loaded translation
+                if (this.bookNames.length === 0 || !this.bookAliases.has(bookData.book.toLowerCase())) {
+                  this.setupBookAliases(bookData.book);
+                }
               }
             } catch (e) {
               console.warn(`Failed to parse ${relativePath}:`, e);
@@ -39,23 +77,45 @@ class BibleRepositoryClass {
           bookPromises.push(promise);
         }
       });
-      
+
       await Promise.all(bookPromises);
-      
-      // Sort book names in biblical order
-      this.bookNames = this.sortBooksInOrder(this.bookNames);
-      this.isLoaded = true;
+
+      this.translations.set(translation, booksMap);
+      this.loadedTranslations.add(translation);
+
+      // Build book name list from first translation loaded
+      if (this.bookNames.length === 0) {
+        const names: string[] = [];
+        for (const book of booksMap.values()) {
+          names.push(book.book);
+        }
+        this.bookNames = this.sortBooksInOrder(names);
+      }
     } catch (error) {
-      console.error('Failed to load Bible data:', error);
-      throw new Error('Failed to load Bible data');
+      console.error(`Failed to load ${translation} Bible data:`, error);
+      throw new Error(`Failed to load ${translation} Bible data`);
     }
   }
-  
+
+  /**
+   * Legacy compat: load KJV from zip path
+   */
+  async loadFromZip(zipPath: string): Promise<void> {
+    // If zipPath matches KJV, use the new method
+    await this.loadTranslation('KJV');
+  }
+
+  // --- Private helpers ---
+
+  private getBooksMap(translation?: string): Map<string, BibleBook> {
+    const t = translation || this.currentTranslation;
+    return this.translations.get(t) || this.translations.values().next().value || new Map();
+  }
+
   private setupBookAliases(bookName: string): void {
     const lower = bookName.toLowerCase();
     this.bookAliases.set(lower, bookName);
-    
-    // Common abbreviations
+
     const abbreviations: Record<string, string[]> = {
       'genesis': ['gen', 'ge'],
       'exodus': ['exod', 'ex'],
@@ -124,13 +184,13 @@ class BibleRepositoryClass {
       'jude': ['jud'],
       'revelation': ['rev', 're', 'revelations'],
     };
-    
+
     const aliases = abbreviations[lower];
     if (aliases) {
       aliases.forEach(alias => this.bookAliases.set(alias, bookName));
     }
   }
-  
+
   private sortBooksInOrder(books: string[]): string[] {
     const biblicalOrder = [
       'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
@@ -149,58 +209,58 @@ class BibleRepositoryClass {
       '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
       'Jude', 'Revelation'
     ];
-    
+
     return books.sort((a, b) => {
       const indexA = biblicalOrder.findIndex(name => name.toLowerCase() === a.toLowerCase());
       const indexB = biblicalOrder.findIndex(name => name.toLowerCase() === b.toLowerCase());
       return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
     });
   }
-  
+
+  // --- Public API (translation-aware) ---
+
   resolveBookName(input: string): string | null {
     const normalized = input.toLowerCase().trim();
     return this.bookAliases.get(normalized) || null;
   }
-  
-  getBook(bookName: string): BibleBook | null {
+
+  getBook(bookName: string, translation?: string): BibleBook | null {
     const resolved = this.resolveBookName(bookName);
     if (!resolved) return null;
-    return this.books.get(resolved.toLowerCase()) || null;
+    return this.getBooksMap(translation).get(resolved.toLowerCase()) || null;
   }
-  
-  getVerse(bookName: string, chapter: string, verse: string): Verse | null {
-    const book = this.getBook(bookName);
+
+  getVerse(bookName: string, chapter: string, verse: string, translation?: string): Verse | null {
+    const book = this.getBook(bookName, translation);
     if (!book) return null;
-    
     const chapterData = book.chapters.find(c => c.chapter === chapter);
     if (!chapterData) return null;
-    
     return chapterData.verses.find(v => v.verse === verse) || null;
   }
-  
+
   getPassage(reference: PassageReference): Passage | null {
-    const book = this.getBook(reference.book);
+    const book = this.getBook(reference.book, reference.translation);
     if (!book) return null;
-    
+
     const chapterData = book.chapters.find(c => c.chapter === reference.chapter);
     if (!chapterData) return null;
-    
+
     const startIndex = chapterData.verses.findIndex(v => v.verse === reference.verseStart);
     if (startIndex === -1) return null;
-    
+
     const endVerse = reference.verseEnd || reference.verseStart;
     const endIndex = chapterData.verses.findIndex(v => v.verse === endVerse);
-    
+
     const verses = chapterData.verses.slice(
-      startIndex, 
+      startIndex,
       endIndex === -1 ? startIndex + 1 : endIndex + 1
     );
-    
+
     const text = verses.map(v => `${v.verse} ${v.text}`).join(' ');
     const displayRef = reference.verseEnd && reference.verseEnd !== reference.verseStart
       ? `${book.book} ${reference.chapter}:${reference.verseStart}-${reference.verseEnd}`
       : `${book.book} ${reference.chapter}:${reference.verseStart}`;
-    
+
     return {
       reference: { ...reference, book: book.book },
       displayReference: displayRef,
@@ -208,57 +268,53 @@ class BibleRepositoryClass {
       verses,
     };
   }
-  
+
   getAllBooks(): string[] {
     return [...this.bookNames];
   }
-  
+
   getChapters(bookName: string): string[] {
     const book = this.getBook(bookName);
     if (!book) return [];
     return book.chapters.map(c => c.chapter);
   }
-  
-  getVerses(bookName: string, chapter: string): Verse[] {
-    const book = this.getBook(bookName);
+
+  getVerses(bookName: string, chapter: string, translation?: string): Verse[] {
+    const book = this.getBook(bookName, translation);
     if (!book) return [];
-    
     const chapterData = book.chapters.find(c => c.chapter === chapter);
     return chapterData?.verses || [];
   }
-  
+
   getVerseCount(bookName: string, chapter: string): number {
     return this.getVerses(bookName, chapter).length;
   }
-  
+
   getChapterCount(bookName: string): number {
     const book = this.getBook(bookName);
     if (!book) return 0;
     return book.chapters.length;
   }
-  
+
   getNextVerse(bookName: string, chapter: string, verse: string): { book: string; chapter: string; verse: string } | null {
     const book = this.getBook(bookName);
     if (!book) return null;
-    
+
     const verses = this.getVerses(bookName, chapter);
     const verseNum = parseInt(verse, 10);
-    
-    // Check if there's a next verse in current chapter
+
     if (verseNum < verses.length) {
       return { book: book.book, chapter, verse: String(verseNum + 1) };
     }
-    
-    // Move to next chapter
+
     const chapterNum = parseInt(chapter, 10);
     const nextChapter = String(chapterNum + 1);
     const nextChapterVerses = this.getVerses(bookName, nextChapter);
-    
+
     if (nextChapterVerses.length > 0) {
       return { book: book.book, chapter: nextChapter, verse: '1' };
     }
-    
-    // Move to next book
+
     const bookIndex = this.bookNames.findIndex(b => b.toLowerCase() === book.book.toLowerCase());
     if (bookIndex >= 0 && bookIndex < this.bookNames.length - 1) {
       const nextBook = this.bookNames[bookIndex + 1];
@@ -267,22 +323,20 @@ class BibleRepositoryClass {
         return { book: nextBook, chapter: nextBookFirstChapter, verse: '1' };
       }
     }
-    
-    return null; // End of Bible
+
+    return null;
   }
-  
+
   getPreviousVerse(bookName: string, chapter: string, verse: string): { book: string; chapter: string; verse: string } | null {
     const book = this.getBook(bookName);
     if (!book) return null;
-    
+
     const verseNum = parseInt(verse, 10);
-    
-    // Check if there's a previous verse in current chapter
+
     if (verseNum > 1) {
       return { book: book.book, chapter, verse: String(verseNum - 1) };
     }
-    
-    // Move to previous chapter
+
     const chapterNum = parseInt(chapter, 10);
     if (chapterNum > 1) {
       const prevChapter = String(chapterNum - 1);
@@ -291,8 +345,7 @@ class BibleRepositoryClass {
         return { book: book.book, chapter: prevChapter, verse: String(prevChapterVerses.length) };
       }
     }
-    
-    // Move to previous book
+
     const bookIndex = this.bookNames.findIndex(b => b.toLowerCase() === book.book.toLowerCase());
     if (bookIndex > 0) {
       const prevBook = this.bookNames[bookIndex - 1];
@@ -303,27 +356,27 @@ class BibleRepositoryClass {
         return { book: prevBook, chapter: lastChapter, verse: String(lastChapterVerses.length) };
       }
     }
-    
-    return null; // Start of Bible
+
+    return null;
   }
-  
+
   isDataLoaded(): boolean {
-    return this.isLoaded;
+    return this.loadedTranslations.size > 0;
   }
-  
-  // Search by reference pattern (e.g., "John 3:16", "Gen 1:1-3")
+
+  isTranslationLoaded(translation: string): boolean {
+    return this.loadedTranslations.has(translation);
+  }
+
   searchByReference(query: string): Passage | null {
-    // Pattern: BookName Chapter:Verse(-EndVerse)?
     const pattern = /^(.+?)\s*(\d+)\s*:\s*(\d+)(?:\s*-\s*(\d+))?$/i;
     const match = query.match(pattern);
-    
     if (!match) return null;
-    
+
     const [, bookPart, chapter, verseStart, verseEnd] = match;
     const bookName = this.resolveBookName(bookPart.trim());
-    
     if (!bookName) return null;
-    
+
     return this.getPassage({
       book: bookName,
       chapter,
@@ -332,20 +385,19 @@ class BibleRepositoryClass {
       translation: this.currentTranslation,
     });
   }
-  
-  // Keyword search across all verses
+
   searchByKeyword(query: string, limit: number = 20): Passage[] {
     const results: Passage[] = [];
     const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-    
     if (searchTerms.length === 0) return results;
-    
-    for (const book of this.books.values()) {
+
+    const booksMap = this.getBooksMap();
+    for (const book of booksMap.values()) {
       for (const chapter of book.chapters) {
         for (const verse of chapter.verses) {
           const verseTextLower = verse.text.toLowerCase();
           const matchCount = searchTerms.filter(term => verseTextLower.includes(term)).length;
-          
+
           if (matchCount > 0) {
             const passage = this.getPassage({
               book: book.book,
@@ -353,7 +405,7 @@ class BibleRepositoryClass {
               verseStart: verse.verse,
               translation: this.currentTranslation,
             });
-            
+
             if (passage) {
               results.push(passage);
               if (results.length >= limit) return results;
@@ -362,7 +414,7 @@ class BibleRepositoryClass {
         }
       }
     }
-    
+
     return results;
   }
 }
