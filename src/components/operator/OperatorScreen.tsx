@@ -31,7 +31,7 @@ export function OperatorScreen() {
     clearPreview,
   } = useInputController();
 
-  const { committedPassage, isLoading, isBibleLoaded, setBibleLoaded, setLoading, isScreenBlanked } = useStateManager();
+  const { committedPassage, isLoading, isBibleLoaded, setBibleLoaded, setLoading, isScreenBlanked, currentTranslation, setTranslation } = useStateManager();
 
   useGlobalKeyboard();
 
@@ -39,7 +39,8 @@ export function OperatorScreen() {
     if (!isBibleLoaded) {
       setLoading(true);
       Promise.all([
-        BibleRepository.loadFromZip('/data/KJV_Bible_JSON.zip'),
+        BibleRepository.loadTranslation('KJV'),
+        BibleRepository.loadTranslation('NIV'),
         SearchEngine.loadSemanticIndex('/data/semanticIndex.json'),
       ])
         .then(() => {
