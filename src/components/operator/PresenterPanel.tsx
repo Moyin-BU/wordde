@@ -169,17 +169,14 @@ export function PresenterPanel() {
     <div className="h-full flex flex-col">
       {/* Header bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="p-1 rounded bg-primary/20">
-            <Monitor className="h-3.5 w-3.5 text-primary" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded bg-primary/20">
+              <Monitor className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">Presenter</span>
           </div>
-          <span className="text-xs font-medium text-muted-foreground">Presenter</span>
-          {projectionLocked && (
-            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-destructive/15 text-destructive text-[10px] font-semibold">
-              <Lock className="h-3 w-3" />
-              Locked
-            </span>
-          )}
+          <ProjectionStatus />
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -221,22 +218,13 @@ export function PresenterPanel() {
           <span className="text-xs text-muted-foreground">
             {currentSlideIndex + 1} / {projectionQueue.length}
           </span>
-          {previousSlide && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs gap-1"
-              onClick={returnToLastPassage}
-              title="Return to last passage (R)"
-            >
-              <Undo2 className="h-3 w-3" />
-              Return
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Slide stack with visual hierarchy */}
+      {/* Emergency Controls */}
+      <div className="px-4 py-2 border-b border-border shrink-0">
+        <EmergencyControls />
+      </div>
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
