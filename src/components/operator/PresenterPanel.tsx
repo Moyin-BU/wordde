@@ -146,11 +146,14 @@ export function PresenterPanel() {
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded bg-primary/20">
-              <Monitor className="h-3.5 w-3.5 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-primary/20">
+                <Monitor className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <span className="text-xs font-medium text-muted-foreground">Presenter</span>
             </div>
-            <span className="text-xs font-medium text-muted-foreground">Presenter</span>
+            <ProjectionStatus />
           </div>
         </div>
         <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
