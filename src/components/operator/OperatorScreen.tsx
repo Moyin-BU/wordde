@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { OnboardingManager, restartTutorial } from '@/components/onboarding/OnboardingManager';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
@@ -13,12 +13,23 @@ import { ServicePlan } from './ServicePlan';
 import { RecentPassages } from './RecentPassages';
 import { ProjectionSettings } from './ProjectionSettings';
 import { ProjectionControl } from './ProjectionControl';
-import { Book, Monitor, ChevronDown, ChevronRight, HelpCircle } from 'lucide-react';
+import { Book, Monitor, HelpCircle, Search, BookOpen, ListChecks, Clock, ChevronDown, ChevronRight, Undo2, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+type TabId = 'search' | 'browse' | 'plan' | 'recent';
+
+const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: 'search', label: 'Search', icon: Search },
+  { id: 'browse', label: 'Browse', icon: BookOpen },
+  { id: 'plan', label: 'Plan', icon: ListChecks },
+  { id: 'recent', label: 'Recent', icon: Clock },
+];
 
 export function OperatorScreen() {
-  const [displayOpen, setDisplayOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('search');
 
   const {
     searchQuery,
@@ -31,7 +42,17 @@ export function OperatorScreen() {
     clearPreview,
   } = useInputController();
 
-  const { committedPassage, isLoading, isBibleLoaded, setBibleLoaded, setLoading, isScreenBlanked, currentTranslation, setTranslation } = useStateManager();
+  const {
+    committedPassage,
+    isLoading,
+    isBibleLoaded,
+    setBibleLoaded,
+    setLoading,
+    currentTranslation,
+    setTranslation,
+    undoProjection,
+    historyStack,
+  } = useStateManager();
 
   useGlobalKeyboard();
 
@@ -68,7 +89,7 @@ export function OperatorScreen() {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <OnboardingManager />
-      {/* Compact Header */}
+      {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
@@ -94,6 +115,22 @@ export function OperatorScreen() {
                 ))}
               </select>
 
+              {/* Undo button next to live indicator */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs gap-1"
+                onClick={undoProjection}
+                disabled={historyStack.length === 0}
+                title="Undo last projection (Ctrl+Z)"
+              >
+                <Undo2 className="h-3 w-3" />
+                Undo
+                {historyStack.length > 0 && (
+                  <span className="ml-0.5 text-[10px] text-muted-foreground">({historyStack.length})</span>
+                )}
+              </Button>
+
               {committedPassage && (
                 <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">
                   <Monitor className="h-3.5 w-3.5 text-primary" />
@@ -109,17 +146,35 @@ export function OperatorScreen() {
 
       {/* Main dual-column layout */}
       <main className="flex-1 flex min-h-0">
-        {/* Left Column - Workflow sections */}
+        {/* Left Column - Tab-based workflow */}
         <div className="w-[380px] shrink-0 border-r border-border flex flex-col bg-card/30">
-          <ScrollArea className="flex-1 min-h-0">
-            {/* ===== SCRIPTURE SECTION ===== */}
-            <div className="border-b border-border">
-              <div className="px-3 py-2">
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-widest">Scripture</span>
-              </div>
+          {/* Tab bar */}
+          <div className="flex border-b border-border shrink-0">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-b-2',
+                    isActive
+                      ? 'border-primary text-primary bg-primary/5'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/10'
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-              {/* Search */}
-              <div className="px-3 pb-2" data-tutorial="search" onKeyDown={handleKeyDown}>
+          {/* Tab content */}
+          <ScrollArea className="flex-1 min-h-0">
+            {activeTab === 'search' && (
+              <div className="p-3 space-y-2" data-tutorial="search" onKeyDown={handleKeyDown}>
                 <SearchInput
                   value={searchQuery}
                   onChange={handleInputChange}
@@ -129,54 +184,49 @@ export function OperatorScreen() {
                   isLoading={isLoading}
                   placeholder="Search reference or keyword..."
                 />
-              </div>
-
-              {/* Search Results */}
-              {searchResults.length > 0 && (
-                <div className="px-2 pb-2">
+                {searchResults.length > 0 && (
                   <ResultsList
                     results={searchResults}
                     selectedIndex={selectedResultIndex}
                     onSelect={handleResultSelect}
                   />
-                </div>
-              )}
-
-              {/* Recent Passages (inline, compact) */}
-              <div data-tutorial="recent"><RecentPassages /></div>
-
-              {/* Bible Navigator */}
-              <div data-tutorial="navigator"><BibleNavigator /></div>
-            </div>
-
-            {/* ===== SERVICE SECTION ===== */}
-            <div className="border-b border-border">
-              <div className="px-3 py-2">
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-widest">Service</span>
-              </div>
-              <div data-tutorial="service"><ServicePlan /></div>
-            </div>
-
-            {/* ===== DISPLAY SECTION (collapsible) ===== */}
-            <div>
-              <button
-                onClick={() => setDisplayOpen(!displayOpen)}
-                className="w-full flex items-center gap-1.5 px-3 py-2 hover:bg-accent/10 transition-colors"
-              >
-                {displayOpen ? (
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 )}
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-widest">Display</span>
-              </button>
-              {displayOpen && (
-                <div className="px-3 pb-3">
-                  <ProjectionSettings />
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {activeTab === 'browse' && (
+              <div data-tutorial="navigator">
+                <BibleNavigator />
+              </div>
+            )}
+
+            {activeTab === 'plan' && (
+              <div data-tutorial="service">
+                <ServicePlan />
+              </div>
+            )}
+
+            {activeTab === 'recent' && (
+              <div data-tutorial="recent">
+                <RecentPassages />
+              </div>
+            )}
           </ScrollArea>
+
+          {/* Display Settings dropdown at bottom */}
+          <div className="border-t border-border shrink-0">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors">
+                  <Settings2 className="h-3.5 w-3.5" />
+                  <span className="font-medium">Display Settings</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="start" className="w-[360px] p-3">
+                <ProjectionSettings />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Right Column - Presenter Panel */}

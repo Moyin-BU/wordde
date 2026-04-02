@@ -31,7 +31,6 @@ export function BibleNavigator() {
   const [level, setLevel] = useState<NavLevel>('books');
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
   const { buildQueueFromPassage, buildQueueFromChapter } = useStateManager();
 
@@ -115,75 +114,64 @@ export function BibleNavigator() {
   );
 
   return (
-    <div className="px-2 pb-2">
-      {/* Header / Toggle */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-1.5 px-1 py-1.5"
-      >
-        <BookOpen className="h-3 w-3 text-muted-foreground shrink-0" />
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex-1 text-left">
-          {breadcrumb}
-        </span>
-        {level !== 'books' && (
+    <div className="px-2 py-2">
+      {/* Breadcrumb / Back */}
+      {level !== 'books' && (
+        <div className="flex items-center gap-1.5 px-1 py-1.5 mb-1">
           <button
-            onClick={e => { e.stopPropagation(); goBack(); }}
+            onClick={goBack}
             className="p-0.5 rounded hover:bg-accent"
           >
-            <ChevronLeft className="h-3 w-3 text-muted-foreground" />
+            <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-        )}
-      </button>
+          <span className="text-xs font-medium text-foreground">{breadcrumb}</span>
+        </div>
+      )}
 
-      {/* Content */}
-      {(level !== 'books' || expanded) && (
-        <div>
-          {level === 'books' && (
-            <div className="flex gap-2">
-              <BookColumn title="Old Testament" books={otBooks} />
-              <div className="w-px bg-border shrink-0" />
-              <BookColumn title="New Testament" books={ntBooks} />
-            </div>
-          )}
+      {level === 'books' && (
+        <div className="flex gap-2">
+          <BookColumn title="Old Testament" books={otBooks} />
+          <div className="w-px bg-border shrink-0" />
+          <BookColumn title="New Testament" books={ntBooks} />
+        </div>
+      )}
 
-          {level === 'chapters' && (
-            <div className="grid grid-cols-5 gap-0.5">
-              {chapters.map((ch) => (
-                <button
-                  key={ch}
-                  onClick={() => handleChapterClick(ch)}
-                  className="flex items-center justify-center h-8 rounded text-sm font-medium hover:bg-accent text-foreground transition-colors"
-                >
-                  {ch}
-                </button>
-              ))}
-            </div>
-          )}
+      {level === 'chapters' && (
+        <div className="grid grid-cols-5 gap-0.5">
+          {chapters.map((ch) => (
+            <button
+              key={ch}
+              onClick={() => handleChapterClick(ch)}
+              className="flex items-center justify-center h-8 rounded text-sm font-medium hover:bg-accent text-foreground transition-colors"
+            >
+              {ch}
+            </button>
+          ))}
+        </div>
+      )}
 
-          {level === 'verses' && (
-            <div className="space-y-1.5">
-              <Button
-                onClick={handleProjectChapter}
-                variant="secondary"
-                size="sm"
-                className="w-full text-xs gap-1.5 h-7"
+      {level === 'verses' && (
+        <div className="space-y-1.5">
+          <Button
+            onClick={handleProjectChapter}
+            variant="secondary"
+            size="sm"
+            className="w-full text-xs gap-1.5 h-7"
+          >
+            <Layers className="h-3 w-3" />
+            Load Full Chapter
+          </Button>
+          <div className="grid grid-cols-5 gap-0.5">
+            {verses.map((v) => (
+              <button
+                key={v.verse}
+                onClick={() => handleVerseClick(v.verse)}
+                className="flex items-center justify-center h-8 rounded text-sm font-medium hover:bg-accent text-foreground transition-colors"
               >
-                <Layers className="h-3 w-3" />
-                Load Full Chapter
-              </Button>
-              <div className="grid grid-cols-5 gap-0.5">
-                {verses.map((v) => (
-                  <button
-                    key={v.verse}
-                    onClick={() => handleVerseClick(v.verse)}
-                    className="flex items-center justify-center h-8 rounded text-sm font-medium hover:bg-accent text-foreground transition-colors"
-                  >
-                    {v.verse}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+                {v.verse}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
