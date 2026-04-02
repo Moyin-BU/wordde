@@ -48,7 +48,9 @@ function SlideCard({
         styles.minH,
         styles.padding,
         styles.glow,
-        variant === 'live' ? 'flex-[55]' : 'flex-[45]'
+        variant === 'live' ? 'flex-[55]' : 'flex-[45]',
+        navFlash === 'next' && variant === 'next' && 'nav-flash-next',
+        navFlash === 'prev' && variant === 'next' && 'nav-flash-prev',
       )}
     >
       <div className="flex items-center gap-2 shrink-0">
