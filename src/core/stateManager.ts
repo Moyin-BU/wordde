@@ -438,10 +438,20 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const { historyStack, currentTranslation } = get();
     if (historyStack.length === 0) return;
     const last = historyStack[historyStack.length - 1];
-    // Pop from history without pushing current back (true undo)
+    // Pop from history — do NOT push current back (true undo)
     set({ historyStack: historyStack.slice(0, -1) });
     const passage = slideToPassage(last, currentTranslation);
-    get().buildQueueFromPassage(passage);
+    const slides = passageToSlides(passage);
+    set({ projectionQueue: slides, currentSlideIndex: 0 });
+    // Project directly without history tracking (pass null to skip history push)
+    const slide = slides[0];
+    if (slide) {
+      const p = slideToPassage(slide, currentTranslation);
+      set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
+      broadcastCommit(p);
+      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
+      get().addToRecent(slide.reference);
+    }
   },
 
   toggleProjectionLock: () => {
