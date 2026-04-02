@@ -236,18 +236,13 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   setSelectedIndex: (index) => {
-    const { searchResults, projectionQueue, liveSlideIndex } = get();
-    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+    const { searchResults } = get();
     if (index >= 0 && index < searchResults.length) {
-      const passage = searchResults[index].passage;
-      const slides = passageToSlides(passage);
+      // Preview only — no projection until explicit action
       set({
         selectedResultIndex: index,
-        previewPassage: passage,
-        projectionQueue: slides,
-        currentSlideIndex: 0,
+        previewPassage: searchResults[index].passage,
       });
-      get()._commitWithOldSlide(oldLiveSlide);
     }
   },
 
