@@ -1,6 +1,6 @@
 import { useStateManager } from '@/core/stateManager';
 import { Button } from '@/components/ui/button';
-import { EyeOff, Undo2, RotateCcw } from 'lucide-react';
+import { EyeOff, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function EmergencyControls() {

@@ -230,12 +230,6 @@ export function useGlobalKeyboard() {
           h.projectNow();
           return;
 
-        case 'r':
-        case 'R':
-          event.preventDefault();
-          h.returnToLastPassage();
-          return;
-
         case 'n':
         case 'N':
           event.preventDefault();
