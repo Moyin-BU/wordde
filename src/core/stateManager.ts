@@ -50,8 +50,6 @@ interface StateManager extends AppState {
 
   // Projection history (reference-level undo)
   historyStack: Slide[];
-  previousSlide: Slide | null;
-  returnToLastPassage: () => void;
   undoProjection: () => void;
 
   // Projection lock
