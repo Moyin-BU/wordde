@@ -349,6 +349,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   slideNext: () => {
     const { currentSlideIndex, projectionQueue, currentTranslation } = get();
+    set({ navigationDirection: 'next' });
+    setTimeout(() => set({ navigationDirection: null }), 150);
     if (currentSlideIndex < projectionQueue.length - 1) {
       set({ currentSlideIndex: currentSlideIndex + 1 });
     } else {
