@@ -31,7 +31,6 @@ export function BibleNavigator() {
   const [level, setLevel] = useState<NavLevel>('books');
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
   const { buildQueueFromPassage, buildQueueFromChapter } = useStateManager();
 
