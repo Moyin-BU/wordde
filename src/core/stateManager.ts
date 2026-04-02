@@ -62,6 +62,8 @@ interface StateManager extends AppState {
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
+  /** Internal: commit with a pre-captured old live slide for correct history tracking */
+  _commitWithOldSlide: (oldLiveSlide: Slide | null) => void;
   blankScreen: () => void;
   loadChapterAsQueue: () => void;
 
@@ -123,9 +125,13 @@ function projectSlide(
   currentSlideIndex: number,
   get: () => StateManager,
   set: (partial: Partial<StateManager>) => void,
+  oldLiveSlideOverride?: Slide | null,
 ) {
   const { liveSlideIndex, projectionQueue, historyStack, currentTranslation } = get();
-  const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+  // Use override when the queue was replaced before this call
+  const oldLiveSlide = oldLiveSlideOverride !== undefined
+    ? oldLiveSlideOverride
+    : (liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null);
 
   // Only push to history if transitioning to a DIFFERENT passage (book/chapter)
   if (oldLiveSlide && !isSameReferenceGroup(oldLiveSlide, slide)) {
@@ -216,6 +222,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
 
   setSearchResults: (results) => {
+    const { projectionQueue, liveSlideIndex } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     set({
       searchResults: results,
       selectedResultIndex: results.length > 0 ? 0 : -1,
@@ -226,7 +234,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       set({ previewPassage: passage });
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
-      get().commitCurrentSlide();
+      get()._commitWithOldSlide(oldLiveSlide);
     } else {
       set({ previewPassage: null, projectionQueue: [], currentSlideIndex: 0 });
     }
@@ -235,14 +243,17 @@ export const useStateManager = create<StateManager>((set, get) => ({
   setPreview: (passage) => {
     set({ previewPassage: passage });
     if (passage) {
+      const { projectionQueue, liveSlideIndex } = get();
+      const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
-      get().commitCurrentSlide();
+      get()._commitWithOldSlide(oldLiveSlide);
     }
   },
 
   setSelectedIndex: (index) => {
-    const { searchResults } = get();
+    const { searchResults, projectionQueue, liveSlideIndex } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     if (index >= 0 && index < searchResults.length) {
       const passage = searchResults[index].passage;
       const slides = passageToSlides(passage);
@@ -252,7 +263,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         projectionQueue: slides,
         currentSlideIndex: 0,
       });
-      get().commitCurrentSlide();
+      get()._commitWithOldSlide(oldLiveSlide);
     }
   },
 
@@ -288,7 +299,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       if (passage) {
         const slides = passageToSlides(passage);
         set({ projectionQueue: slides, currentSlideIndex: 0 });
-        get().commitCurrentSlide();
+        get()._commitWithOldSlide(liveSlide);
       }
     }
   },
@@ -329,16 +340,21 @@ export const useStateManager = create<StateManager>((set, get) => ({
   // === Slide queue operations ===
 
   buildQueueFromPassage: (passage) => {
+    // Capture old live slide BEFORE replacing the queue
+    const { projectionQueue, liveSlideIndex } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const slides = passageToSlides(passage);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    get().commitCurrentSlide();
+    get()._commitWithOldSlide(oldLiveSlide);
   },
 
   buildQueueFromChapter: (book, chapter) => {
-    const { currentTranslation } = get();
+    // Capture old live slide BEFORE replacing the queue
+    const { projectionQueue, liveSlideIndex, currentTranslation } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const slides = chapterToSlides(book, chapter, currentTranslation);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    get().commitCurrentSlide();
+    get()._commitWithOldSlide(oldLiveSlide);
   },
 
   slideNext: () => {
@@ -422,10 +438,20 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const { historyStack, currentTranslation } = get();
     if (historyStack.length === 0) return;
     const last = historyStack[historyStack.length - 1];
-    // Pop from history without pushing current back (true undo)
+    // Pop from history — do NOT push current back (true undo)
     set({ historyStack: historyStack.slice(0, -1) });
     const passage = slideToPassage(last, currentTranslation);
-    get().buildQueueFromPassage(passage);
+    const slides = passageToSlides(passage);
+    set({ projectionQueue: slides, currentSlideIndex: 0 });
+    // Project directly without history tracking (pass null to skip history push)
+    const slide = slides[0];
+    if (slide) {
+      const p = slideToPassage(slide, currentTranslation);
+      set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
+      broadcastCommit(p);
+      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
+      get().addToRecent(slide.reference);
+    }
   },
 
   toggleProjectionLock: () => {
@@ -471,6 +497,39 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
     // Normal (unlocked) projection through single entry point
     projectSlide(slide, currentSlideIndex, get, set);
+  },
+
+  _commitWithOldSlide: (oldLiveSlide: Slide | null) => {
+    const { projectionQueue, currentSlideIndex, projectionLocked, currentTranslation } = get();
+    const slide = projectionQueue[currentSlideIndex];
+    if (!slide) return;
+
+    if (projectionLocked) {
+      // Same pre-load logic as commitCurrentSlide
+      if (currentSlideIndex >= projectionQueue.length - 1) {
+        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+        if (nextPos) {
+          const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
+          if (verse) {
+            set({
+              projectionQueue: [
+                ...get().projectionQueue,
+                {
+                  reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
+                  text: verse.text,
+                  book: nextPos.book,
+                  chapter: nextPos.chapter,
+                  verse: nextPos.verse,
+                },
+              ],
+            });
+          }
+        }
+      }
+      return;
+    }
+
+    projectSlide(slide, currentSlideIndex, get, set, oldLiveSlide);
   },
 
   blankScreen: () => {
@@ -528,8 +587,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
     get().commitCurrentSlide();
   },
   goToNextChapter: () => {
-    const { committedPassage, currentTranslation } = get();
+    const { committedPassage, currentTranslation, projectionQueue, liveSlideIndex } = get();
     if (!committedPassage) return;
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const { book, chapter } = committedPassage.reference;
     const chapterNum = parseInt(chapter, 10);
     const nextChapter = String(chapterNum + 1);
@@ -539,7 +599,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const passage = BibleRepository.getPassage({ book, chapter: nextChapter, verseStart: '1', translation: currentTranslation });
       if (passage) {
         set({ projectionQueue: slides, currentSlideIndex: 0 });
-        get().commitCurrentSlide();
+        get()._commitWithOldSlide(oldLiveSlide);
       }
       return;
     }
@@ -553,14 +613,15 @@ export const useStateManager = create<StateManager>((set, get) => ({
         const passage = BibleRepository.getPassage({ book: nextBook, chapter: chapters[0], verseStart: '1', translation: currentTranslation });
         if (passage) {
           set({ projectionQueue: slides, currentSlideIndex: 0 });
-          get().commitCurrentSlide();
+          get()._commitWithOldSlide(oldLiveSlide);
         }
       }
     }
   },
   goToPreviousChapter: () => {
-    const { committedPassage, currentTranslation } = get();
+    const { committedPassage, currentTranslation, projectionQueue, liveSlideIndex } = get();
     if (!committedPassage) return;
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const { book, chapter } = committedPassage.reference;
     const chapterNum = parseInt(chapter, 10);
     if (chapterNum > 1) {
@@ -569,7 +630,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const passage = BibleRepository.getPassage({ book, chapter: prevChapter, verseStart: '1', translation: currentTranslation });
       if (passage) {
         set({ projectionQueue: slides, currentSlideIndex: 0 });
-        get().commitCurrentSlide();
+        get()._commitWithOldSlide(oldLiveSlide);
       }
       return;
     }
@@ -584,7 +645,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         const passage = BibleRepository.getPassage({ book: prevBook, chapter: lastChapter, verseStart: '1', translation: currentTranslation });
         if (passage) {
           set({ projectionQueue: slides, currentSlideIndex: 0 });
-          get().commitCurrentSlide();
+          get()._commitWithOldSlide(oldLiveSlide);
         }
       }
     }
