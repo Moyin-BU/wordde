@@ -123,6 +123,7 @@ function projectSlide(
   currentSlideIndex: number,
   get: () => StateManager,
   set: (partial: Partial<StateManager>) => void,
+  oldLiveSlideOverride?: Slide | null,
 ) {
   const { liveSlideIndex, projectionQueue, historyStack, currentTranslation } = get();
   const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
