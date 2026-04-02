@@ -40,17 +40,6 @@ export function EmergencyControls() {
         <Undo2 className="h-3 w-3" />
         Undo
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-7 px-2 text-xs gap-1 border-destructive/30"
-        onClick={returnToLastPassage}
-        disabled={!previousSlide}
-        title="Return to last passage (R)"
-      >
-        <RotateCcw className="h-3 w-3" />
-        Return
-      </Button>
     </div>
   );
 }
