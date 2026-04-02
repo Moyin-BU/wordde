@@ -189,7 +189,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   // Projection queue state
   historyStack: [],
-  previousSlide: null,
   projectionLocked: false,
   projectionQueue: [],
   currentSlideIndex: 0,
