@@ -220,10 +220,6 @@ export function PresenterPanel() {
         </div>
       </div>
 
-      {/* Emergency Controls */}
-      <div className="px-4 py-2 border-b border-border shrink-0">
-        <EmergencyControls />
-      </div>
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
