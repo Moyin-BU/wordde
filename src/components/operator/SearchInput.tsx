@@ -29,6 +29,7 @@ export function SearchInput({
   onSelectSuggestion,
   isLoading = false,
   placeholder = 'Search by reference or keyword... (e.g., John 3:16)',
+  hasExactMatch = false,
 }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
