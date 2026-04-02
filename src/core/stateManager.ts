@@ -333,16 +333,21 @@ export const useStateManager = create<StateManager>((set, get) => ({
   // === Slide queue operations ===
 
   buildQueueFromPassage: (passage) => {
+    // Capture old live slide BEFORE replacing the queue
+    const { projectionQueue, liveSlideIndex } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const slides = passageToSlides(passage);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    get().commitCurrentSlide();
+    get()._commitWithOldSlide(oldLiveSlide);
   },
 
   buildQueueFromChapter: (book, chapter) => {
-    const { currentTranslation } = get();
+    // Capture old live slide BEFORE replacing the queue
+    const { projectionQueue, liveSlideIndex, currentTranslation } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const slides = chapterToSlides(book, chapter, currentTranslation);
     set({ projectionQueue: slides, currentSlideIndex: 0 });
-    get().commitCurrentSlide();
+    get()._commitWithOldSlide(oldLiveSlide);
   },
 
   slideNext: () => {
