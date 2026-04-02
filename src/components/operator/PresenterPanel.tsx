@@ -94,6 +94,7 @@ export function PresenterPanel() {
     projectionLocked,
     toggleProjectionLock,
     projectNow,
+    navigationDirection,
   } = useStateManager();
 
   const [jumpValue, setJumpValue] = useState('');
