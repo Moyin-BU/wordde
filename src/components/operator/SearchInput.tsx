@@ -12,6 +12,7 @@ interface SearchInputProps {
   onSelectSuggestion?: (reference: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  hasExactMatch?: boolean;
 }
 
 const typeIcons = {
