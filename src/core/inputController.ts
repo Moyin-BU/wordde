@@ -68,13 +68,25 @@ export function useInputController() {
         event.preventDefault();
         selectPrevious();
         break;
+
+      case 'Enter':
+        // Explicit projection: project the selected result (or first result)
+        if (searchResults.length > 0) {
+          event.preventDefault();
+          const idx = selectedResultIndex >= 0 ? selectedResultIndex : 0;
+          const passage = searchResults[idx]?.passage;
+          if (passage) {
+            setPreview(passage); // setPreview projects the passage
+          }
+        }
+        break;
         
       case 'Escape':
         event.preventDefault();
         clearPreview();
         break;
     }
-  }, [selectNext, selectPrevious, previewPassage, commitPassage, clearPreview]);
+  }, [selectNext, selectPrevious, searchResults, selectedResultIndex, setPreview, clearPreview]);
   
   /**
    * Handle result selection via click
