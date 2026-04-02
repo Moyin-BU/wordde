@@ -190,6 +190,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   // Projection queue state
   historyStack: [],
+  projectionPulse: false,
+  undoMessage: null,
+  navigationDirection: null,
   projectionLocked: false,
   projectionQueue: [],
   currentSlideIndex: 0,
