@@ -484,7 +484,40 @@ export const useStateManager = create<StateManager>((set, get) => ({
     projectSlide(slide, currentSlideIndex, get, set);
   },
 
-  blankScreen: () => {
+  _commitWithOldSlide: (oldLiveSlide: Slide | null) => {
+    const { projectionQueue, currentSlideIndex, projectionLocked, currentTranslation } = get();
+    const slide = projectionQueue[currentSlideIndex];
+    if (!slide) return;
+
+    if (projectionLocked) {
+      // Same pre-load logic as commitCurrentSlide
+      if (currentSlideIndex >= projectionQueue.length - 1) {
+        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+        if (nextPos) {
+          const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
+          if (verse) {
+            set({
+              projectionQueue: [
+                ...get().projectionQueue,
+                {
+                  reference: `${nextPos.book} ${nextPos.chapter}:${nextPos.verse}`,
+                  text: verse.text,
+                  book: nextPos.book,
+                  chapter: nextPos.chapter,
+                  verse: nextPos.verse,
+                },
+              ],
+            });
+          }
+        }
+      }
+      return;
+    }
+
+    projectSlide(slide, currentSlideIndex, get, set, oldLiveSlide);
+  },
+
+
     const { isScreenBlanked, committedPassage } = get();
     if (isScreenBlanked) {
       set({ isScreenBlanked: false });
