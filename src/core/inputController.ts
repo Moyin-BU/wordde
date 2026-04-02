@@ -104,10 +104,14 @@ export function useInputController() {
   const handleSuggestionSelect = useCallback((reference: string) => {
     setSearchQuery(reference);
     
-    // Query SearchEngine with the selected reference
+    // Query SearchEngine with the selected reference and project the top result
     const results = SearchEngine.search(reference, currentTranslation);
     setSearchResults(results);
-  }, [currentTranslation, setSearchQuery, setSearchResults]);
+    // Explicit user selection → project immediately
+    if (results.length > 0) {
+      setPreview(results[0].passage);
+    }
+  }, [currentTranslation, setSearchQuery, setSearchResults, setPreview]);
 
   return {
     // State
