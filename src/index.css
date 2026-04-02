@@ -118,4 +118,50 @@
   .committed-glow {
     box-shadow: 0 0 30px hsl(var(--committed-glow) / 0.3);
   }
+
+  /* Projection pulse - brief glow on projection confirmation */
+  .projection-pulse {
+    animation: projection-confirm 250ms ease-out;
+  }
+
+  @keyframes projection-confirm {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 hsl(142 76% 36% / 0.6); }
+    50% { transform: scale(1.8); box-shadow: 0 0 8px 2px hsl(142 76% 36% / 0.4); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(142 76% 36% / 0); }
+  }
+
+  /* Undo context message fade */
+  .undo-message {
+    animation: undo-fade 1.5s ease-out forwards;
+  }
+
+  @keyframes undo-fade {
+    0% { opacity: 0; transform: translateX(-4px); }
+    10% { opacity: 1; transform: translateX(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Navigation direction flash */
+  .nav-flash-next {
+    animation: nav-flash-right 150ms ease-out;
+  }
+  .nav-flash-prev {
+    animation: nav-flash-left 150ms ease-out;
+  }
+
+  @keyframes nav-flash-right {
+    0% { border-color: hsl(var(--accent)); }
+    100% { border-color: hsl(var(--accent) / 0.4); }
+  }
+  @keyframes nav-flash-left {
+    0% { border-color: hsl(var(--accent)); }
+    100% { border-color: hsl(var(--accent) / 0.4); }
+  }
+
+  /* Search valid reference indicator */
+  .search-valid-ref {
+    border-bottom: 2px solid hsl(var(--accent));
+    transition: border-color 200ms ease;
+  }
 }
