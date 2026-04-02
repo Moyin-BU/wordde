@@ -252,7 +252,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
   },
 
   setSelectedIndex: (index) => {
-    const { searchResults } = get();
+    const { searchResults, projectionQueue, liveSlideIndex } = get();
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     if (index >= 0 && index < searchResults.length) {
       const passage = searchResults[index].passage;
       const slides = passageToSlides(passage);
@@ -262,7 +263,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         projectionQueue: slides,
         currentSlideIndex: 0,
       });
-      get().commitCurrentSlide();
+      get()._commitWithOldSlide(oldLiveSlide);
     }
   },
 
