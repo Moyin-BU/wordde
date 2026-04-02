@@ -299,7 +299,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       if (passage) {
         const slides = passageToSlides(passage);
         set({ projectionQueue: slides, currentSlideIndex: 0 });
-        get().commitCurrentSlide();
+        get()._commitWithOldSlide(liveSlide);
       }
     }
   },
