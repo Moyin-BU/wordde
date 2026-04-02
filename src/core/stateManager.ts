@@ -243,9 +243,11 @@ export const useStateManager = create<StateManager>((set, get) => ({
   setPreview: (passage) => {
     set({ previewPassage: passage });
     if (passage) {
+      const { projectionQueue, liveSlideIndex } = get();
+      const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
       const slides = passageToSlides(passage);
       set({ projectionQueue: slides, currentSlideIndex: 0 });
-      get().commitCurrentSlide();
+      get()._commitWithOldSlide(oldLiveSlide);
     }
   },
 
