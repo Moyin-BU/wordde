@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Search, X, Book, BookOpen, FileText } from 'lucide-react';
+import { Search, X, Book, BookOpen, FileText, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getSuggestions, type Suggestion } from '@/core/autocomplete';
