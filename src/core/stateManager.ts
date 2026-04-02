@@ -400,33 +400,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
     }
   },
 
-  returnToLastPassage: () => {
-    const { previousSlide, projectionQueue, liveSlideIndex } = get();
-    if (!previousSlide) return;
-
-    // Swap: save current live slide as the new "previous"
-    const currentLive = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
-    const { currentTranslation } = get();
-    const passage = slideToPassage(previousSlide, currentTranslation);
-    const slides = passageToSlides(passage);
-
-    set({
-      previousSlide: currentLive,
-      projectionQueue: slides,
-      currentSlideIndex: 0,
-    });
-
-    // Project immediately (bypass normal history push since this is a toggle)
-    const slide = slides[0];
-    if (slide) {
-      const p = slideToPassage(slide, currentTranslation);
-      set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
-      broadcastCommit(p);
-      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
-      get().addToRecent(slide.reference);
-    }
-  },
-
   undoProjection: () => {
     const { historyStack, currentTranslation } = get();
     if (historyStack.length === 0) return;
