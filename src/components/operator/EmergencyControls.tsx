@@ -8,9 +8,7 @@ export function EmergencyControls() {
     blankScreen,
     isScreenBlanked,
     undoProjection,
-    returnToLastPassage,
     historyStack,
-    previousSlide,
   } = useStateManager();
 
   return (
