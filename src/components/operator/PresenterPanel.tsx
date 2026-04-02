@@ -13,11 +13,13 @@ function SlideCard({
   label,
   icon: Icon,
   variant,
+  navFlash,
 }: {
   slide: Slide | null;
   label: string;
   icon: React.ElementType;
   variant: 'live' | 'next';
+  navFlash?: 'next' | 'prev' | null;
 }) {
   const styles = {
     live: {
