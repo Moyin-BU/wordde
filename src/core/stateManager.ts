@@ -134,12 +134,8 @@ function projectSlide(
   // Only push to history if transitioning to a DIFFERENT passage (book/chapter)
   if (oldLiveSlide && !isSameReferenceGroup(oldLiveSlide, slide)) {
     set({
-      previousSlide: oldLiveSlide,
       historyStack: [...historyStack, oldLiveSlide].slice(-10),
     });
-  } else if (oldLiveSlide) {
-    // Same chapter — still track as "previous" for Return but NOT in undo stack
-    set({ previousSlide: oldLiveSlide });
   }
 
   const passage = slideToPassage(slide, currentTranslation);
