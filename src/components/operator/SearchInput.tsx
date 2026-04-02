@@ -131,7 +131,11 @@ export function SearchInput({
 
   return (
     <div ref={containerRef} className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+      {hasExactMatch && value.trim() ? (
+        <Check className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
+      ) : (
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+      )}
       <Input
         ref={inputRef}
         type="text"
