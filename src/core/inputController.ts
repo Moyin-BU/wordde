@@ -131,7 +131,6 @@ export function useGlobalKeyboard() {
     blankScreen,
     goToNextChapter,
     goToPreviousChapter,
-    returnToLastPassage,
     projectNow,
     undoProjection,
   } = useStateManager();
@@ -145,7 +144,6 @@ export function useGlobalKeyboard() {
     blankScreen,
     goToNextChapter,
     goToPreviousChapter,
-    returnToLastPassage,
     projectNow,
     undoProjection,
   });
@@ -160,7 +158,6 @@ export function useGlobalKeyboard() {
       blankScreen,
       goToNextChapter,
       goToPreviousChapter,
-      returnToLastPassage,
       projectNow,
       undoProjection,
     };
@@ -231,12 +228,6 @@ export function useGlobalKeyboard() {
         case 'P':
           event.preventDefault();
           h.projectNow();
-          return;
-
-        case 'r':
-        case 'R':
-          event.preventDefault();
-          h.returnToLastPassage();
           return;
 
         case 'n':

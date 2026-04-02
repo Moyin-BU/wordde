@@ -50,8 +50,6 @@ interface StateManager extends AppState {
 
   // Projection history (reference-level undo)
   historyStack: Slide[];
-  previousSlide: Slide | null;
-  returnToLastPassage: () => void;
   undoProjection: () => void;
 
   // Projection lock
@@ -136,12 +134,8 @@ function projectSlide(
   // Only push to history if transitioning to a DIFFERENT passage (book/chapter)
   if (oldLiveSlide && !isSameReferenceGroup(oldLiveSlide, slide)) {
     set({
-      previousSlide: oldLiveSlide,
       historyStack: [...historyStack, oldLiveSlide].slice(-10),
     });
-  } else if (oldLiveSlide) {
-    // Same chapter — still track as "previous" for Return but NOT in undo stack
-    set({ previousSlide: oldLiveSlide });
   }
 
   const passage = slideToPassage(slide, currentTranslation);
@@ -191,7 +185,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   // Projection queue state
   historyStack: [],
-  previousSlide: null,
   projectionLocked: false,
   projectionQueue: [],
   currentSlideIndex: 0,
@@ -404,33 +397,6 @@ export const useStateManager = create<StateManager>((set, get) => ({
         projectionQueue: [newSlide, ...projectionQueue],
         currentSlideIndex: 0,
       });
-    }
-  },
-
-  returnToLastPassage: () => {
-    const { previousSlide, projectionQueue, liveSlideIndex } = get();
-    if (!previousSlide) return;
-
-    // Swap: save current live slide as the new "previous"
-    const currentLive = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
-    const { currentTranslation } = get();
-    const passage = slideToPassage(previousSlide, currentTranslation);
-    const slides = passageToSlides(passage);
-
-    set({
-      previousSlide: currentLive,
-      projectionQueue: slides,
-      currentSlideIndex: 0,
-    });
-
-    // Project immediately (bypass normal history push since this is a toggle)
-    const slide = slides[0];
-    if (slide) {
-      const p = slideToPassage(slide, currentTranslation);
-      set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
-      broadcastCommit(p);
-      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
-      get().addToRecent(slide.reference);
     }
   },
 

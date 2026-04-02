@@ -217,9 +217,6 @@ export function OperatorScreen() {
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">P</kbd> Project
             </span>
             <span>
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">R</kbd> Return
-            </span>
-            <span>
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">⌘Z</kbd> Undo
             </span>
             <span>
