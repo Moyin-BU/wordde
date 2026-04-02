@@ -148,7 +148,10 @@ function projectSlide(
     liveSlideIndex: currentSlideIndex,
     committedPassage: passage,
     isScreenBlanked: false,
+    projectionPulse: true,
   });
+  // Clear pulse after 250ms
+  setTimeout(() => set({ projectionPulse: false }), 250);
   broadcastCommit(passage);
   persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
   get().addToRecent(slide.reference);
