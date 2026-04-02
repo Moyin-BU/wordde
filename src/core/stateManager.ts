@@ -577,8 +577,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
     get().commitCurrentSlide();
   },
   goToNextChapter: () => {
-    const { committedPassage, currentTranslation } = get();
+    const { committedPassage, currentTranslation, projectionQueue, liveSlideIndex } = get();
     if (!committedPassage) return;
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const { book, chapter } = committedPassage.reference;
     const chapterNum = parseInt(chapter, 10);
     const nextChapter = String(chapterNum + 1);
@@ -588,7 +589,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const passage = BibleRepository.getPassage({ book, chapter: nextChapter, verseStart: '1', translation: currentTranslation });
       if (passage) {
         set({ projectionQueue: slides, currentSlideIndex: 0 });
-        get().commitCurrentSlide();
+        get()._commitWithOldSlide(oldLiveSlide);
       }
       return;
     }
@@ -602,14 +603,15 @@ export const useStateManager = create<StateManager>((set, get) => ({
         const passage = BibleRepository.getPassage({ book: nextBook, chapter: chapters[0], verseStart: '1', translation: currentTranslation });
         if (passage) {
           set({ projectionQueue: slides, currentSlideIndex: 0 });
-          get().commitCurrentSlide();
+          get()._commitWithOldSlide(oldLiveSlide);
         }
       }
     }
   },
   goToPreviousChapter: () => {
-    const { committedPassage, currentTranslation } = get();
+    const { committedPassage, currentTranslation, projectionQueue, liveSlideIndex } = get();
     if (!committedPassage) return;
+    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const { book, chapter } = committedPassage.reference;
     const chapterNum = parseInt(chapter, 10);
     if (chapterNum > 1) {
@@ -618,7 +620,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const passage = BibleRepository.getPassage({ book, chapter: prevChapter, verseStart: '1', translation: currentTranslation });
       if (passage) {
         set({ projectionQueue: slides, currentSlideIndex: 0 });
-        get().commitCurrentSlide();
+        get()._commitWithOldSlide(oldLiveSlide);
       }
       return;
     }
@@ -633,7 +635,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         const passage = BibleRepository.getPassage({ book: prevBook, chapter: lastChapter, verseStart: '1', translation: currentTranslation });
         if (passage) {
           set({ projectionQueue: slides, currentSlideIndex: 0 });
-          get().commitCurrentSlide();
+          get()._commitWithOldSlide(oldLiveSlide);
         }
       }
     }
