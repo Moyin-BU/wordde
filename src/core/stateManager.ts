@@ -62,6 +62,8 @@ interface StateManager extends AppState {
   slideNext: () => void;
   slidePrevious: () => void;
   commitCurrentSlide: () => void;
+  /** Internal: commit with a pre-captured old live slide for correct history tracking */
+  _commitWithOldSlide: (oldLiveSlide: Slide | null) => void;
   blankScreen: () => void;
   loadChapterAsQueue: () => void;
 
