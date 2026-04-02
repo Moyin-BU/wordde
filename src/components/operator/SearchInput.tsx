@@ -147,7 +147,8 @@ export function SearchInput({
           "bg-input border-border",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary",
           "placeholder:text-muted-foreground/60",
-          "font-sans"
+          "font-sans",
+          hasExactMatch && value.trim() && "search-valid-ref"
         )}
         autoComplete="off"
         spellCheck={false}
