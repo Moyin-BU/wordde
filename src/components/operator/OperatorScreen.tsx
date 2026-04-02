@@ -183,6 +183,7 @@ export function OperatorScreen() {
                   onSelectSuggestion={handleSuggestionSelect}
                   isLoading={isLoading}
                   placeholder="Search reference or keyword..."
+                  hasExactMatch={searchResults.length > 0 && (searchResults[0]?.matchType === 'exact' || searchResults[0]?.matchType === 'reference')}
                 />
                 {searchResults.length > 0 && (
                   <ResultsList
