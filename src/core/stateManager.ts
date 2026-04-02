@@ -52,6 +52,11 @@ interface StateManager extends AppState {
   historyStack: Slide[];
   undoProjection: () => void;
 
+  // UI feedback signals
+  projectionPulse: boolean;
+  undoMessage: string | null;
+  navigationDirection: 'next' | 'prev' | null;
+
   // Projection lock
   projectionLocked: boolean;
   toggleProjectionLock: () => void;
