@@ -517,7 +517,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     projectSlide(slide, currentSlideIndex, get, set, oldLiveSlide);
   },
 
-
+  blankScreen: () => {
     const { isScreenBlanked, committedPassage } = get();
     if (isScreenBlanked) {
       set({ isScreenBlanked: false });
