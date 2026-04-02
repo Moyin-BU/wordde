@@ -215,22 +215,13 @@ export const useStateManager = create<StateManager>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
 
   setSearchResults: (results) => {
-    const { projectionQueue, liveSlideIndex } = get();
-    const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+    // Only update the results list and preview — do NOT project automatically.
+    // Projection happens only on explicit user action (Enter / click).
     set({
       searchResults: results,
       selectedResultIndex: results.length > 0 ? 0 : -1,
+      previewPassage: results.length > 0 ? results[0].passage : null,
     });
-
-    if (results.length > 0) {
-      const passage = results[0].passage;
-      set({ previewPassage: passage });
-      const slides = passageToSlides(passage);
-      set({ projectionQueue: slides, currentSlideIndex: 0 });
-      get()._commitWithOldSlide(oldLiveSlide);
-    } else {
-      set({ previewPassage: null, projectionQueue: [], currentSlideIndex: 0 });
-    }
   },
 
   setPreview: (passage) => {
