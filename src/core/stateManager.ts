@@ -415,6 +415,10 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (slide) {
       const p = slideToPassage(slide, currentTranslation);
       set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
+      // Show undo feedback message
+      const shortRef = `${slide.book} ${slide.chapter}`;
+      set({ undoMessage: `Returned to ${shortRef}` });
+      setTimeout(() => set({ undoMessage: null }), 1500);
       broadcastCommit(p);
       persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
       get().addToRecent(slide.reference);
