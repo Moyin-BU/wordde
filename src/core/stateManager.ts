@@ -126,7 +126,10 @@ function projectSlide(
   oldLiveSlideOverride?: Slide | null,
 ) {
   const { liveSlideIndex, projectionQueue, historyStack, currentTranslation } = get();
-  const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
+  // Use override when the queue was replaced before this call
+  const oldLiveSlide = oldLiveSlideOverride !== undefined
+    ? oldLiveSlideOverride
+    : (liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null);
 
   // Only push to history if transitioning to a DIFFERENT passage (book/chapter)
   if (oldLiveSlide && !isSameReferenceGroup(oldLiveSlide, slide)) {
