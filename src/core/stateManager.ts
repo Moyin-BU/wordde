@@ -52,6 +52,11 @@ interface StateManager extends AppState {
   historyStack: Slide[];
   undoProjection: () => void;
 
+  // UI feedback signals
+  projectionPulse: boolean;
+  undoMessage: string | null;
+  navigationDirection: 'next' | 'prev' | null;
+
   // Projection lock
   projectionLocked: boolean;
   toggleProjectionLock: () => void;
@@ -143,7 +148,10 @@ function projectSlide(
     liveSlideIndex: currentSlideIndex,
     committedPassage: passage,
     isScreenBlanked: false,
+    projectionPulse: true,
   });
+  // Clear pulse after 250ms
+  setTimeout(() => set({ projectionPulse: false }), 250);
   broadcastCommit(passage);
   persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
   get().addToRecent(slide.reference);
@@ -185,6 +193,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   // Projection queue state
   historyStack: [],
+  projectionPulse: false,
+  undoMessage: null,
+  navigationDirection: null,
   projectionLocked: false,
   projectionQueue: [],
   currentSlideIndex: 0,
@@ -338,6 +349,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   slideNext: () => {
     const { currentSlideIndex, projectionQueue, currentTranslation } = get();
+    set({ navigationDirection: 'next' });
+    setTimeout(() => set({ navigationDirection: null }), 150);
     if (currentSlideIndex < projectionQueue.length - 1) {
       set({ currentSlideIndex: currentSlideIndex + 1 });
     } else {
@@ -363,6 +376,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
 
   slidePrevious: () => {
     const { currentSlideIndex, projectionQueue, currentTranslation } = get();
+    set({ navigationDirection: 'prev' });
+    setTimeout(() => set({ navigationDirection: null }), 150);
     if (currentSlideIndex > 0) {
       set({ currentSlideIndex: currentSlideIndex - 1 });
     } else {
@@ -400,6 +415,10 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (slide) {
       const p = slideToPassage(slide, currentTranslation);
       set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
+      // Show undo feedback message
+      const shortRef = `${slide.book} ${slide.chapter}`;
+      set({ undoMessage: `Returned to ${shortRef}` });
+      setTimeout(() => set({ undoMessage: null }), 1500);
       broadcastCommit(p);
       persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
       get().addToRecent(slide.reference);

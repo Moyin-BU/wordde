@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Search, X, Book, BookOpen, FileText } from 'lucide-react';
+import { Search, X, Book, BookOpen, FileText, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getSuggestions, type Suggestion } from '@/core/autocomplete';
@@ -12,6 +12,7 @@ interface SearchInputProps {
   onSelectSuggestion?: (reference: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  hasExactMatch?: boolean;
 }
 
 const typeIcons = {
@@ -28,6 +29,7 @@ export function SearchInput({
   onSelectSuggestion,
   isLoading = false,
   placeholder = 'Search by reference or keyword... (e.g., John 3:16)',
+  hasExactMatch = false,
 }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -129,7 +131,11 @@ export function SearchInput({
 
   return (
     <div ref={containerRef} className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+      {hasExactMatch && value.trim() ? (
+        <Check className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-accent" />
+      ) : (
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+      )}
       <Input
         ref={inputRef}
         type="text"
@@ -145,7 +151,8 @@ export function SearchInput({
           "bg-input border-border",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary",
           "placeholder:text-muted-foreground/60",
-          "font-sans"
+          "font-sans",
+          hasExactMatch && value.trim() && "search-valid-ref"
         )}
         autoComplete="off"
         spellCheck={false}

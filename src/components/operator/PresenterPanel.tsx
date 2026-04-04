@@ -13,11 +13,13 @@ function SlideCard({
   label,
   icon: Icon,
   variant,
+  navFlash,
 }: {
   slide: Slide | null;
   label: string;
   icon: React.ElementType;
   variant: 'live' | 'next';
+  navFlash?: 'next' | 'prev' | null;
 }) {
   const styles = {
     live: {
@@ -48,7 +50,9 @@ function SlideCard({
         styles.minH,
         styles.padding,
         styles.glow,
-        variant === 'live' ? 'flex-[55]' : 'flex-[45]'
+        variant === 'live' ? 'flex-[55]' : 'flex-[45]',
+        navFlash === 'next' && variant === 'next' && 'nav-flash-next',
+        navFlash === 'prev' && variant === 'next' && 'nav-flash-prev',
       )}
     >
       <div className="flex items-center gap-2 shrink-0">
@@ -94,6 +98,7 @@ export function PresenterPanel() {
     projectionLocked,
     toggleProjectionLock,
     projectNow,
+    navigationDirection,
   } = useStateManager();
 
   const [jumpValue, setJumpValue] = useState('');
@@ -221,7 +226,7 @@ export function PresenterPanel() {
       </div>
 
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
-        <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
+        <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" navFlash={navigationDirection} />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
           <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-4 flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -232,7 +237,7 @@ export function PresenterPanel() {
             <p className="scripture-text leading-relaxed text-scripture text-lg">{previewSlide.text}</p>
           </div>
         )}
-        <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
+        <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" navFlash={navigationDirection} />
         
       </div>
     </div>
