@@ -119,10 +119,10 @@ export function OperatorScreen() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 px-2 text-xs gap-1 transition-transform duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-7 px-2 text-xs gap-1"
                 onClick={undoProjection}
                 disabled={historyStack.length === 0}
-                title={historyStack.length === 0 ? 'No previous passage' : `Undo last projection (Ctrl+Z) — ${historyStack.length} in history`}
+                title="Undo last projection (Ctrl+Z)"
               >
                 <Undo2 className="h-3 w-3" />
                 Undo
@@ -183,7 +183,6 @@ export function OperatorScreen() {
                   onSelectSuggestion={handleSuggestionSelect}
                   isLoading={isLoading}
                   placeholder="Search reference or keyword..."
-                  hasExactMatch={searchResults.length > 0 && (searchResults[0]?.matchType === 'exact' || searchResults[0]?.matchType === 'reference')}
                 />
                 {searchResults.length > 0 && (
                   <ResultsList
