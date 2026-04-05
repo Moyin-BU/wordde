@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WelcomeSlides } from './WelcomeSlides';
 import { TutorialOverlay } from './TutorialOverlay';
+import { clearAllHints } from './ContextualHint';
 import {
   Dialog,
   DialogContent,
@@ -77,4 +78,11 @@ export function OnboardingManager() {
 /** Call this to restart the tutorial */
 export function restartTutorial() {
   window.dispatchEvent(new CustomEvent('restartTutorial'));
+}
+
+/** Call this to reset all onboarding and hints */
+export function resetOnboarding() {
+  localStorage.removeItem(STORAGE_KEY);
+  clearAllHints();
+  window.location.reload();
 }

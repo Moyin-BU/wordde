@@ -1,27 +1,37 @@
 import { useState } from 'react';
-import { Book, Zap, ListChecks, Rocket } from 'lucide-react';
+import { Search, Monitor, ArrowLeftRight, ListChecks, SlidersHorizontal, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const slides = [
   {
-    icon: Book,
-    title: 'Welcome to Bible Projection',
-    description: 'A fast, offline-first scripture projection system built for live church services.',
+    icon: Search,
+    title: 'Find any Bible verse instantly',
+    description: 'Type "John 3:16" or browse through books and chapters.',
   },
   {
-    icon: Zap,
-    title: 'Instant Scripture Projection',
-    description: 'Select any verse and it projects immediately — no extra steps. Search, browse, or pick from your service plan.',
+    icon: Monitor,
+    title: 'Project verses to the screen',
+    description: 'Selecting a verse displays it immediately — no extra steps.',
+  },
+  {
+    icon: ArrowLeftRight,
+    title: 'Move through verses effortlessly',
+    description: 'Use arrow keys or on-screen controls to navigate.',
   },
   {
     icon: ListChecks,
-    title: 'Service Plan & Live Control',
-    description: 'Prepare your passages ahead of time, then navigate through them with keyboard shortcuts during the service.',
+    title: 'Prepare your service ahead of time',
+    description: 'Save passages in a service plan and move through them during the service.',
+  },
+  {
+    icon: SlidersHorizontal,
+    title: 'Control what the audience sees',
+    description: 'Blank the screen, add backgrounds, and adjust display settings.',
   },
   {
     icon: Rocket,
-    title: 'Ready to Begin?',
-    description: 'Everything runs offline. Your projection screen stays in sync automatically via a second browser tab.',
+    title: "You're ready",
+    description: 'Everything runs offline. Start using the app and learn as you go.',
   },
 ];
 
@@ -77,7 +87,7 @@ export function WelcomeSlides({ onComplete }: WelcomeSlidesProps) {
             onClick={() => (isLast ? onComplete() : setCurrent(current + 1))}
             className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
-            {isLast ? 'Enter App' : 'Next'}
+            {isLast ? 'Start Using App' : 'Next'}
           </button>
         </div>
       </div>
