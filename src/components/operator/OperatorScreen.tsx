@@ -263,14 +263,23 @@ export function OperatorScreen() {
       {/* Keyboard shortcut hint bar */}
       <footer className="border-t border-border bg-card/50 shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-          <button
-            onClick={restartTutorial}
-            className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            title="Restart Tutorial"
-          >
-            <HelpCircle className="h-3 w-3" />
-            <span>Tutorial</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={restartTutorial}
+              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+              title="Restart Tutorial"
+            >
+              <HelpCircle className="h-3 w-3" />
+              <span>Tutorial</span>
+            </button>
+            <button
+              onClick={resetOnboarding}
+              className="px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+              title="Replay full onboarding and reset all hints"
+            >
+              Replay Tutorial
+            </button>
+          </div>
           <div className="flex items-center gap-4">
             <span>
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev
