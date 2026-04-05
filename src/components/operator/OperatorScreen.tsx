@@ -171,7 +171,11 @@ export function OperatorScreen() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === 'browse') setBrowseOpened(true);
+                    if (tab.id === 'plan') setPlanOpened(true);
+                  }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-b-2',
                     isActive
@@ -198,7 +202,9 @@ export function OperatorScreen() {
                   onSelectSuggestion={handleSuggestionSelect}
                   isLoading={isLoading}
                   placeholder="Search reference or keyword..."
+                  onFocus={() => setSearchFocused(true)}
                 />
+                <ContextualHint id="search" message='Type a verse like "John 3:16"' show={searchFocused} />
                 {searchResults.length > 0 && (
                   <ResultsList
                     results={searchResults}
@@ -211,12 +217,14 @@ export function OperatorScreen() {
 
             {activeTab === 'browse' && (
               <div data-tutorial="navigator">
+                <ContextualHint id="browse" message="Select a book → chapter → verse" show={browseOpened} className="mx-2 mt-2" />
                 <BibleNavigator />
               </div>
             )}
 
             {activeTab === 'plan' && (
               <div data-tutorial="service">
+                <ContextualHint id="service_plan" message="Add passages here to prepare your service" show={planOpened} className="mx-2 mt-2" />
                 <ServicePlan />
               </div>
             )}
