@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { OnboardingManager, restartTutorial } from '@/components/onboarding/OnboardingManager';
+import { OnboardingManager, restartTutorial, resetOnboarding } from '@/components/onboarding/OnboardingManager';
+import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
@@ -30,6 +31,20 @@ const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
 
 export function OperatorScreen() {
   const [activeTab, setActiveTab] = useState<TabId>('search');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [browseOpened, setBrowseOpened] = useState(false);
+  const [planOpened, setPlanOpened] = useState(false);
+  const [settingsOpened, setSettingsOpened] = useState(false);
+  const [arrowUsed, setArrowUsed] = useState(false);
+
+  // Track arrow key usage for keyboard hint
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') setArrowUsed(true);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const {
     searchQuery,
@@ -156,7 +171,11 @@ export function OperatorScreen() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === 'browse') setBrowseOpened(true);
+                    if (tab.id === 'plan') setPlanOpened(true);
+                  }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-b-2',
                     isActive
@@ -183,7 +202,9 @@ export function OperatorScreen() {
                   onSelectSuggestion={handleSuggestionSelect}
                   isLoading={isLoading}
                   placeholder="Search reference or keyword..."
+                  onFocus={() => setSearchFocused(true)}
                 />
+                <ContextualHint id="search" message='Type a verse like "John 3:16"' show={searchFocused} />
                 {searchResults.length > 0 && (
                   <ResultsList
                     results={searchResults}
@@ -196,12 +217,14 @@ export function OperatorScreen() {
 
             {activeTab === 'browse' && (
               <div data-tutorial="navigator">
+                <ContextualHint id="browse" message="Select a book → chapter → verse" show={browseOpened} className="mx-2 mt-2" />
                 <BibleNavigator />
               </div>
             )}
 
             {activeTab === 'plan' && (
               <div data-tutorial="service">
+                <ContextualHint id="service_plan" message="Add passages here to prepare your service" show={planOpened} className="mx-2 mt-2" />
                 <ServicePlan />
               </div>
             )}
@@ -215,7 +238,7 @@ export function OperatorScreen() {
 
           {/* Display Settings dropdown at bottom */}
           <div className="border-t border-border shrink-0">
-            <Popover>
+            <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
                 <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors">
                   <Settings2 className="h-3.5 w-3.5" />
@@ -223,6 +246,7 @@ export function OperatorScreen() {
                 </button>
               </PopoverTrigger>
               <PopoverContent side="top" align="start" className="w-[360px] p-3">
+                <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="mb-2" />
                 <ProjectionSettings />
               </PopoverContent>
             </Popover>
@@ -231,6 +255,7 @@ export function OperatorScreen() {
 
         {/* Right Column - Presenter Panel */}
         <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
+          <ContextualHint id="keyboard_nav" message="Use ← → to move between verses" show={arrowUsed} className="mx-3 mt-2" />
           <PresenterPanel />
         </div>
       </main>
@@ -238,14 +263,23 @@ export function OperatorScreen() {
       {/* Keyboard shortcut hint bar */}
       <footer className="border-t border-border bg-card/50 shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-          <button
-            onClick={restartTutorial}
-            className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-            title="Restart Tutorial"
-          >
-            <HelpCircle className="h-3 w-3" />
-            <span>Tutorial</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={restartTutorial}
+              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+              title="Restart Tutorial"
+            >
+              <HelpCircle className="h-3 w-3" />
+              <span>Tutorial</span>
+            </button>
+            <button
+              onClick={resetOnboarding}
+              className="px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+              title="Replay full onboarding and reset all hints"
+            >
+              Replay Tutorial
+            </button>
+          </div>
           <div className="flex items-center gap-4">
             <span>
               <kbd className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">←</kbd> Prev

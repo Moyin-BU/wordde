@@ -12,6 +12,7 @@ interface SearchInputProps {
   onSelectSuggestion?: (reference: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  onFocus?: () => void;
 }
 
 const typeIcons = {
@@ -28,6 +29,7 @@ export function SearchInput({
   onSelectSuggestion,
   isLoading = false,
   placeholder = 'Search by reference or keyword... (e.g., John 3:16)',
+  onFocus: onFocusProp,
 }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -138,6 +140,7 @@ export function SearchInput({
         onKeyDown={handleKeyDown}
         onFocus={() => {
           if (suggestions.length > 0) setShowSuggestions(true);
+          onFocusProp?.();
         }}
         placeholder={placeholder}
         className={cn(
