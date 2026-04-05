@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { OnboardingManager, restartTutorial } from '@/components/onboarding/OnboardingManager';
+import { OnboardingManager, restartTutorial, resetOnboarding } from '@/components/onboarding/OnboardingManager';
+import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
 import { BibleRepository } from '@/core/bibleRepository';
@@ -30,6 +31,20 @@ const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
 
 export function OperatorScreen() {
   const [activeTab, setActiveTab] = useState<TabId>('search');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [browseOpened, setBrowseOpened] = useState(false);
+  const [planOpened, setPlanOpened] = useState(false);
+  const [settingsOpened, setSettingsOpened] = useState(false);
+  const [arrowUsed, setArrowUsed] = useState(false);
+
+  // Track arrow key usage for keyboard hint
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') setArrowUsed(true);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const {
     searchQuery,
