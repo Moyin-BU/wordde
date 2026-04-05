@@ -144,6 +144,8 @@ function projectSlide(
     committedPassage: passage,
     isScreenBlanked: false,
   });
+  localStorage.setItem('currentProjection', JSON.stringify(passage));
+  console.log('Saved projection:', passage);
   broadcastCommit(passage);
   persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
   get().addToRecent(slide.reference);
