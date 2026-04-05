@@ -526,6 +526,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (chapterPassage) {
       set({ committedPassage: chapterPassage, isScreenBlanked: false });
       broadcastCommit(chapterPassage);
+      persistProjectionState({ passage: chapterPassage, isBlanked: false, timestamp: Date.now() });
     }
   },
 
