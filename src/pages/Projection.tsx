@@ -148,7 +148,24 @@ const Projection = () => {
 
   // Load persisted state immediately on mount (refresh-safe)
   useEffect(() => {
+    console.log('Projection tab loaded');
     loadAllAssets().then(setAssetUrls);
+
+    const saved = localStorage.getItem('currentProjection');
+    console.log('Loaded from localStorage:', saved);
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Passage;
+        setPassage(parsed);
+        setIsBlanked(false);
+        console.log('Rendering saved projection');
+      } catch {
+        console.log('No saved projection found');
+      }
+    } else {
+      console.log('No saved projection found');
+    }
 
     const persisted = loadPersistedProjectionState();
     if (persisted) {
@@ -171,6 +188,12 @@ const Projection = () => {
   }, []);
 
   useEffect(() => {
+    const channel = getChannel();
+    const broadcastLogger: NonNullable<BroadcastChannel['onmessage']> = (event) => {
+      console.log('Received broadcast:', event.data);
+    };
+    channel.onmessage = broadcastLogger;
+
     const unsub = onBroadcastMessage((msg) => {
       if (msg.type === 'COMMIT_PASSAGE') {
         setPassage(msg.payload);
@@ -195,7 +218,10 @@ const Projection = () => {
     });
 
     requestCurrentState();
-    return unsub;
+    return () => {
+      if (channel.onmessage === broadcastLogger) channel.onmessage = null;
+      unsub();
+    };
   }, []);
 
   return (
