@@ -1,21 +1,34 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { useStateManager } from '@/core/stateManager';
-import { Monitor, ExternalLink, Wifi, WifiOff, X } from 'lucide-react';
+import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 export type ProjectionStatus = 'idle' | 'connecting' | 'active' | 'disconnected';
 
 const SETUP_STEPS = [
-  'Move the projection window to the TV screen',
-  'Press F11 in the projection window for fullscreen',
-  'Return to this screen to control slides',
+  {
+    icon: MonitorUp,
+    title: 'Move the projection window to your TV screen',
+    description: 'Drag the new window onto your external display',
+  },
+  {
+    icon: Maximize,
+    title: 'Press F11 to enter fullscreen',
+    description: 'On the projection window, press F11 for fullscreen mode',
+  },
+  {
+    icon: CheckCircle2,
+    title: 'Ensure only the verse is visible on the TV',
+    description: 'Confirm the projection fills the entire screen',
+  },
 ];
 
 export function ProjectionControl() {
   const [status, setStatus] = useState<ProjectionStatus>('idle');
-  const [showGuide, setShowGuide] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
   const projectorWindowRef = useRef<Window | null>(null);
   const lastHeartbeatRef = useRef<number>(0);
 
@@ -25,8 +38,10 @@ export function ProjectionControl() {
   useEffect(() => {
     const unsub = onBroadcastMessage((msg) => {
       if (msg.type === 'PROJECTOR_READY') {
+        if (status === 'connecting') {
+          setShowSetup(true);
+        }
         setStatus('active');
-        setShowGuide(true);
       } else if (msg.type === 'HEARTBEAT') {
         lastHeartbeatRef.current = msg.timestamp;
         if (status === 'disconnected' || status === 'connecting') {
@@ -50,6 +65,17 @@ export function ProjectionControl() {
     return () => clearInterval(interval);
   }, [status]);
 
+  // Check if projection window was closed
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (projectorWindowRef.current && projectorWindowRef.current.closed) {
+        projectorWindowRef.current = null;
+        setStatus('idle');
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
   // Periodic state re-sync
   useEffect(() => {
     const interval = setInterval(() => {
@@ -63,19 +89,11 @@ export function ProjectionControl() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-hide guide after 12 seconds
-  useEffect(() => {
-    if (!showGuide) return;
-    const timer = setTimeout(() => setShowGuide(false), 12000);
-    return () => clearTimeout(timer);
-  }, [showGuide]);
-
   const startProjection = useCallback(() => {
     // If window exists and is open, just focus
     if (projectorWindowRef.current && !projectorWindowRef.current.closed) {
       projectorWindowRef.current.focus();
       if (status === 'disconnected') {
-        // Re-send current state
         const state = useStateManager.getState();
         broadcastSync(
           state.committedPassage,
@@ -88,7 +106,11 @@ export function ProjectionControl() {
     }
 
     setStatus('connecting');
-    projectorWindowRef.current = window.open('/projection', 'projector');
+    projectorWindowRef.current = window.open(
+      '/projection',
+      'projectionWindow',
+      'width=1280,height=720'
+    );
 
     // Send INIT state after a short delay
     setTimeout(() => {
@@ -101,6 +123,10 @@ export function ProjectionControl() {
     }, 500);
   }, [status]);
 
+  const handleSetupComplete = useCallback(() => {
+    setShowSetup(false);
+  }, []);
+
   const statusConfig = {
     idle: {
       label: 'Start Projection',
@@ -109,7 +135,7 @@ export function ProjectionControl() {
       disabled: false,
     },
     connecting: {
-      label: 'Setting up projection…',
+      label: 'Setting up…',
       icon: Monitor,
       variant: 'outline' as const,
       disabled: true,
@@ -121,7 +147,7 @@ export function ProjectionControl() {
       disabled: false,
     },
     disconnected: {
-      label: 'Reconnect Projector',
+      label: 'Reconnect',
       icon: WifiOff,
       variant: 'destructive' as const,
       disabled: false,
@@ -132,61 +158,79 @@ export function ProjectionControl() {
   const Icon = config.icon;
 
   return (
-    <div className="relative flex items-center gap-3">
-      {/* Status indicator dot */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <span
-          className={cn(
-            'h-2 w-2 rounded-full transition-colors',
-            status === 'active' && 'bg-green-500',
-            status === 'connecting' && 'bg-yellow-500 animate-pulse',
-            status === 'disconnected' && 'bg-destructive',
-            status === 'idle' && 'bg-muted-foreground/40'
-          )}
-        />
-        <span className="hidden sm:inline">
-          {status === 'active' && 'Connected'}
-          {status === 'connecting' && 'Connecting…'}
-          {status === 'disconnected' && 'Disconnected'}
-          {status === 'idle' && 'Not started'}
-        </span>
+    <>
+      <div className="flex items-center gap-3">
+        {/* Status indicator */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span
+            className={cn(
+              'h-2 w-2 rounded-full transition-colors',
+              status === 'active' && 'bg-green-500',
+              status === 'connecting' && 'bg-yellow-500 animate-pulse',
+              status === 'disconnected' && 'bg-destructive',
+              status === 'idle' && 'bg-muted-foreground/40'
+            )}
+          />
+          <span className="hidden sm:inline">
+            {status === 'active' && 'Connected'}
+            {status === 'connecting' && 'Connecting…'}
+            {status === 'disconnected' && 'Disconnected'}
+            {status === 'idle' && 'Not started'}
+          </span>
+        </div>
+
+        <Button
+          variant={config.variant}
+          size="sm"
+          className="h-7 text-xs gap-1.5"
+          onClick={startProjection}
+          disabled={config.disabled}
+        >
+          <Icon className="h-3.5 w-3.5" />
+          {config.label}
+        </Button>
       </div>
 
-      <Button
-        variant={config.variant}
-        size="sm"
-        className="h-7 text-xs gap-1.5"
-        onClick={startProjection}
-        disabled={config.disabled}
-      >
-        <Icon className="h-3.5 w-3.5" />
-        {config.label}
-      </Button>
+      {/* Setup Guide Dialog */}
+      <Dialog open={showSetup} onOpenChange={setShowSetup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-primary" />
+              Set Up Projection
+            </DialogTitle>
+            <DialogDescription>
+              Follow these steps to configure your external display.
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Guided setup overlay */}
-      {showGuide && status === 'active' && (
-        <div className="absolute top-full right-0 mt-2 z-50 w-64 rounded-lg border border-border bg-card shadow-lg p-3 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-primary">Setup Guide</span>
-            <button
-              onClick={() => setShowGuide(false)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <ol className="space-y-1.5">
-            {SETUP_STEPS.map((step, i) => (
-              <li key={i} className="flex gap-2 text-[11px] text-muted-foreground">
-                <span className="shrink-0 w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
-                  {i + 1}
-                </span>
-                {step}
-              </li>
-            ))}
+          <ol className="space-y-4 my-2">
+            {SETUP_STEPS.map((step, i) => {
+              const StepIcon = step.icon;
+              return (
+                <li key={i} className="flex gap-3 items-start">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <StepIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="pt-0.5">
+                    <p className="text-sm font-medium text-foreground">{step.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+                  </div>
+                </li>
+              );
+            })}
           </ol>
-        </div>
-      )}
-    </div>
+
+          <Button
+            onClick={handleSetupComplete}
+            className="w-full mt-2 animate-pulse hover:animate-none"
+            size="lg"
+          >
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            Projection Ready
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
