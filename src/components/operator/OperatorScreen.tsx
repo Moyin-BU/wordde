@@ -238,7 +238,7 @@ export function OperatorScreen() {
 
           {/* Display Settings dropdown at bottom */}
           <div className="border-t border-border shrink-0">
-            <Popover>
+            <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
                 <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors">
                   <Settings2 className="h-3.5 w-3.5" />
@@ -246,6 +246,7 @@ export function OperatorScreen() {
                 </button>
               </PopoverTrigger>
               <PopoverContent side="top" align="start" className="w-[360px] p-3">
+                <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="mb-2" />
                 <ProjectionSettings />
               </PopoverContent>
             </Popover>
@@ -254,6 +255,7 @@ export function OperatorScreen() {
 
         {/* Right Column - Presenter Panel */}
         <div className="flex-1 min-w-0 flex flex-col" data-tutorial="presenter">
+          <ContextualHint id="keyboard_nav" message="Use ← → to move between verses" show={arrowUsed} className="mx-3 mt-2" />
           <PresenterPanel />
         </div>
       </main>
