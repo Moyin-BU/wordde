@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { OnboardingManager, restartTutorial, resetOnboarding } from '@/components/onboarding/OnboardingManager';
+import { OnboardingManager, resetOnboarding } from '@/components/onboarding/OnboardingManager';
 import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
@@ -265,19 +265,12 @@ export function OperatorScreen() {
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <button
-              onClick={restartTutorial}
-              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
-              title="Restart Tutorial"
-            >
-              <HelpCircle className="h-3 w-3" />
-              <span>Tutorial</span>
-            </button>
-            <button
               onClick={resetOnboarding}
-              className="px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-accent hover:text-accent-foreground transition-colors"
               title="Replay full onboarding and reset all hints"
             >
-              Replay Tutorial
+              <HelpCircle className="h-3 w-3" />
+              <span>Replay Tutorial</span>
             </button>
           </div>
           <div className="flex items-center gap-4">
