@@ -8,7 +8,7 @@ interface TutorialStep {
   title: string;
   instruction: string;
   position: 'top' | 'bottom' | 'left' | 'right';
-  actionType: 'auto' | 'search' | 'navigate' | 'jump' | 'service-click' | 'key-n' | 'key-b';
+  actionType: 'auto' | 'search' | 'navigate' | 'jump' | 'service-click' | 'key-b';
   completedText?: string;
 }
 
@@ -54,14 +54,6 @@ const STEPS: TutorialStep[] = [
   },
   {
     targetSelector: '[data-tutorial="presenter"]',
-    title: 'Next Passage',
-    instruction: 'Press N to advance to the next passage in your Service Plan.',
-    position: 'left',
-    actionType: 'key-n',
-    completedText: 'Next passage loaded!',
-  },
-  {
-    targetSelector: '[data-tutorial="presenter"]',
     title: 'Blank Screen',
     instruction: 'Press B to blank/unblank the projection screen.',
     position: 'left',
@@ -77,6 +69,57 @@ const STEPS: TutorialStep[] = [
   },
 ];
 
+const TOOLTIP_MARGIN = 12;
+const TOOLTIP_WIDTH = 288; // max-w-xs ≈ 20rem = 320px, but content is ~288px
+const TOOLTIP_HEIGHT_EST = 160; // estimated max tooltip height
+
+/**
+ * Clamp tooltip position so it stays fully within the viewport.
+ * Returns { top, left } in px for fixed positioning.
+ */
+function clampTooltip(
+  rect: DOMRect,
+  preferredPosition: 'top' | 'bottom' | 'left' | 'right',
+  viewportW: number,
+  viewportH: number
+): { top: number; left: number } {
+  let top: number;
+  let left: number;
+
+  // Try preferred position first
+  if (preferredPosition === 'right') {
+    top = rect.top;
+    left = rect.right + TOOLTIP_MARGIN;
+  } else if (preferredPosition === 'left') {
+    top = rect.top;
+    left = rect.left - TOOLTIP_WIDTH - TOOLTIP_MARGIN;
+  } else if (preferredPosition === 'bottom') {
+    top = rect.bottom + TOOLTIP_MARGIN;
+    left = rect.left;
+  } else {
+    top = rect.top - TOOLTIP_HEIGHT_EST - TOOLTIP_MARGIN;
+    left = rect.left;
+  }
+
+  // Clamp horizontal
+  if (left + TOOLTIP_WIDTH > viewportW - TOOLTIP_MARGIN) {
+    left = viewportW - TOOLTIP_WIDTH - TOOLTIP_MARGIN;
+  }
+  if (left < TOOLTIP_MARGIN) {
+    left = TOOLTIP_MARGIN;
+  }
+
+  // Clamp vertical
+  if (top + TOOLTIP_HEIGHT_EST > viewportH - TOOLTIP_MARGIN) {
+    top = viewportH - TOOLTIP_HEIGHT_EST - TOOLTIP_MARGIN;
+  }
+  if (top < TOOLTIP_MARGIN) {
+    top = TOOLTIP_MARGIN;
+  }
+
+  return { top, left };
+}
+
 interface TutorialOverlayProps {
   onComplete: () => void;
 }
@@ -90,11 +133,29 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
   const currentStep = STEPS[step];
   const { committedPassage, currentSlideIndex, isScreenBlanked } = useStateManager();
 
-  // Measure the target element
+  // Measure + scroll target into view
   const measureTarget = useCallback(() => {
     if (!currentStep) return;
     const el = document.querySelector(currentStep.targetSelector);
-    if (el) setRect(el.getBoundingClientRect());
+    if (!el) return;
+
+    // Scroll into view if not visible
+    const elRect = el.getBoundingClientRect();
+    const inView =
+      elRect.top >= 0 &&
+      elRect.left >= 0 &&
+      elRect.bottom <= window.innerHeight &&
+      elRect.right <= window.innerWidth;
+
+    if (!inView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      // Re-measure after scroll settles
+      requestAnimationFrame(() => {
+        setRect(el.getBoundingClientRect());
+      });
+    } else {
+      setRect(elRect);
+    }
   }, [currentStep]);
 
   useEffect(() => {
@@ -132,9 +193,6 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
     }
 
     if (currentStep.actionType === 'jump') {
-      // Listen for changes to committed passage that indicate a jump
-      const handler = () => setActionDone(true);
-      // We detect jump by watching slide index changes while this step is active
       if (prevSlideIndexRef.current !== null && currentSlideIndex !== prevSlideIndexRef.current) {
         setActionDone(true);
       }
@@ -142,7 +200,6 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
     }
 
     if (currentStep.actionType === 'service-click') {
-      // Any passage commit during this step counts
       const initialPassage = committedPassage?.displayReference;
       const unsub = useStateManager.subscribe((state) => {
         if (state.committedPassage && state.committedPassage.displayReference !== initialPassage) {
@@ -150,14 +207,6 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
         }
       });
       return unsub;
-    }
-
-    if (currentStep.actionType === 'key-n') {
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'n' || e.key === 'N') setActionDone(true);
-      };
-      window.addEventListener('keydown', handler);
-      return () => window.removeEventListener('keydown', handler);
     }
 
     if (currentStep.actionType === 'key-b') {
@@ -199,20 +248,7 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
     height: rect.height + padding * 2,
   };
 
-  const tooltipStyle: React.CSSProperties = {};
-  if (currentStep.position === 'right') {
-    tooltipStyle.top = rect.top;
-    tooltipStyle.left = rect.right + 16;
-  } else if (currentStep.position === 'left') {
-    tooltipStyle.top = rect.top;
-    tooltipStyle.right = window.innerWidth - rect.left + 16;
-  } else if (currentStep.position === 'bottom') {
-    tooltipStyle.top = rect.bottom + 16;
-    tooltipStyle.left = rect.left;
-  } else {
-    tooltipStyle.bottom = window.innerHeight - rect.top + 16;
-    tooltipStyle.left = rect.left;
-  }
+  const tooltipPos = clampTooltip(rect, currentStep.position, window.innerWidth, window.innerHeight);
 
   const isLastStep = step === STEPS.length - 1;
   const isActionStep = currentStep.actionType !== 'auto';
@@ -250,10 +286,10 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
         }}
       />
 
-      {/* Tooltip */}
+      {/* Tooltip — fixed, viewport-clamped */}
       <div
-        className="absolute max-w-xs bg-card border border-border rounded-xl p-4 shadow-xl"
-        style={{ ...tooltipStyle, pointerEvents: 'auto' }}
+        className="fixed max-w-xs bg-card border border-border rounded-xl p-4 shadow-xl"
+        style={{ top: tooltipPos.top, left: tooltipPos.left, pointerEvents: 'auto' }}
       >
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="text-sm font-semibold text-foreground">{currentStep.title}</h3>
@@ -296,6 +332,16 @@ export function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
           </div>
         </div>
       </div>
+
+      {/* Fixed escape button — always accessible regardless of scroll */}
+      <button
+        onClick={onComplete}
+        className="fixed top-3 right-3 flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-card/90 border border-border text-xs text-muted-foreground hover:text-foreground backdrop-blur-sm transition-colors"
+        style={{ pointerEvents: 'auto', zIndex: 91 }}
+      >
+        <X className="h-3 w-3" />
+        Exit Tutorial
+      </button>
     </div>
   );
 }
