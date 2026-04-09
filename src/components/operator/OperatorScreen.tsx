@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { OnboardingManager, restartTutorial, resetOnboarding } from '@/components/onboarding/OnboardingManager';
+import { OnboardingManager, resetOnboarding } from '@/components/onboarding/OnboardingManager';
 import { ContextualHint } from '@/components/onboarding/ContextualHint';
 import { useInputController, useGlobalKeyboard } from '@/core/inputController';
 import { useStateManager } from '@/core/stateManager';
