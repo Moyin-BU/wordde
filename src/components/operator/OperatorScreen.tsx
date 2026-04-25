@@ -249,9 +249,10 @@ export function OperatorScreen() {
                 side="top"
                 align="start"
                 collisionPadding={12}
-                className="w-[360px] p-3 max-h-[min(80vh,560px)] overflow-hidden"
+                className="w-[360px] p-0 flex flex-col overflow-hidden"
+                style={{ height: 'min(80vh, 560px)' }}
               >
-                <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="mb-2" />
+                <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="m-3 mb-0 shrink-0" />
                 <ProjectionSettings />
               </PopoverContent>
             </Popover>
