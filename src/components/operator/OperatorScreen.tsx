@@ -245,7 +245,12 @@ export function OperatorScreen() {
                   <span className="font-medium">Display Settings</span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent side="top" align="start" className="w-[360px] p-3">
+              <PopoverContent
+                side="top"
+                align="start"
+                collisionPadding={12}
+                className="w-[360px] p-3 max-h-[min(80vh,560px)] overflow-hidden"
+              >
                 <ContextualHint id="display_settings" message="Customize what appears on screen" show={settingsOpened} className="mb-2" />
                 <ProjectionSettings />
               </PopoverContent>
