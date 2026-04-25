@@ -144,8 +144,10 @@ const Projection = () => {
     softBgUrl: '',
     sessionScreens: [],
     activeSessionId: '',
+    backgrounds: [],
+    activeBackgroundId: '',
   });
-  const [assetUrls, setAssetUrls] = useState<Record<AssetType, string>>({ logo: '', softBackground: '' });
+  const [assetUrls, setAssetUrls] = useState<Record<string, string>>({});
 
   // Load persisted state immediately on mount (refresh-safe)
   useEffect(() => {
