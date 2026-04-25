@@ -1,14 +1,23 @@
 // IndexedDB-based asset storage for offline image persistence
 // Stores logo and background images as Blobs (bypasses localStorage's 5MB limit)
+//
+// Keys:
+//   'logo'                   → single church logo
+//   'softBackground'         → legacy single soft background (kept for back-compat)
+//   `bg:<uuid>`              → user-uploaded backgrounds (max 7, see MAX_BACKGROUNDS)
 
 const DB_NAME = 'bible_projection_assets';
 const DB_VERSION = 1;
 const STORE_NAME = 'assets';
 
+export const MAX_BACKGROUNDS = 7;
+export const BG_PREFIX = 'bg:';
+
 export type AssetType = 'logo' | 'softBackground';
+export type AssetKey = AssetType | string; // string for `bg:<uuid>`
 
 interface AssetRecord {
-  id: AssetType;
+  id: AssetKey;
   file: Blob;
   createdAt: number;
 }
@@ -27,12 +36,12 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function saveAsset(type: AssetType, file: Blob): Promise<void> {
+export async function saveAsset(key: AssetKey, file: Blob): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const record: AssetRecord = { id: type, file, createdAt: Date.now() };
+    const record: AssetRecord = { id: key, file, createdAt: Date.now() };
     const req = store.put(record);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
@@ -40,12 +49,12 @@ export async function saveAsset(type: AssetType, file: Blob): Promise<void> {
   });
 }
 
-export async function loadAsset(type: AssetType): Promise<Blob | null> {
+export async function loadAsset(key: AssetKey): Promise<Blob | null> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    const req = store.get(type);
+    const req = store.get(key);
     req.onsuccess = () => {
       const record = req.result as AssetRecord | undefined;
       resolve(record?.file ?? null);
@@ -55,30 +64,52 @@ export async function loadAsset(type: AssetType): Promise<Blob | null> {
   });
 }
 
-export async function deleteAsset(type: AssetType): Promise<void> {
+export async function deleteAsset(key: AssetKey): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const req = store.delete(type);
+    const req = store.delete(key);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
     tx.oncomplete = () => db.close();
   });
 }
 
-export async function loadAllAssets(): Promise<Record<AssetType, string>> {
-  const result: Record<AssetType, string> = { logo: '', softBackground: '' };
+/** List all keys currently stored. */
+export async function listAssetKeys(): Promise<string[]> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.getAllKeys();
+    req.onsuccess = () => resolve((req.result as IDBValidKey[]).map(String));
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => db.close();
+  });
+}
+
+/**
+ * Loads all known assets into a map of `key → object URL`.
+ * Includes legacy `logo` and `softBackground` plus every `bg:<uuid>` entry.
+ * Caller is responsible for revoking URLs when replacing the map.
+ */
+export async function loadAllAssets(): Promise<Record<string, string>> {
+  const result: Record<string, string> = {};
   try {
-    const [logoBlob, bgBlob] = await Promise.all([
-      loadAsset('logo'),
-      loadAsset('softBackground'),
-    ]);
-    if (logoBlob) result.logo = URL.createObjectURL(logoBlob);
-    if (bgBlob) result.softBackground = URL.createObjectURL(bgBlob);
+    const keys = await listAssetKeys();
+    await Promise.all(
+      keys.map(async (k) => {
+        const blob = await loadAsset(k);
+        if (blob) result[k] = URL.createObjectURL(blob);
+      })
+    );
   } catch (e) {
     console.error('Failed to load assets from IndexedDB:', e);
   }
+  // Ensure stable shape for legacy callers
+  if (!('logo' in result)) result.logo = '';
+  if (!('softBackground' in result)) result.softBackground = '';
   return result;
 }
 
@@ -94,4 +125,13 @@ export function validateImageFile(file: File): string | null {
     return 'File too large. Maximum size is 10 MB.';
   }
   return null;
+}
+
+/** Generate a new unique background asset key. */
+export function newBackgroundKey(): string {
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${BG_PREFIX}${uuid}`;
 }

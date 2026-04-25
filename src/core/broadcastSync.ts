@@ -13,12 +13,21 @@ export interface SessionScreen {
   subtitle: string;
 }
 
+/** A reference to a user-uploaded background image stored in IndexedDB. */
+export interface BackgroundImageRef {
+  id: string;        // matches the IndexedDB key, e.g. `bg:<uuid>`
+  name: string;      // human-readable label
+  createdAt: number;
+}
+
 export interface BlankSettings {
   style: BlankStyle;
-  logoUrl: string;
-  softBgUrl: string;
+  logoUrl: string;             // legacy, unused for new uploads
+  softBgUrl: string;           // legacy
   sessionScreens: SessionScreen[];
   activeSessionId: string;
+  backgrounds: BackgroundImageRef[];
+  activeBackgroundId: string;  // id of selected background, '' = none
 }
 
 export const DEFAULT_SESSION_SCREENS: SessionScreen[] = [
@@ -30,17 +39,30 @@ export const DEFAULT_SESSION_SCREENS: SessionScreen[] = [
 ];
 
 export function loadBlankSettings(): BlankSettings {
-  try {
-    const stored = localStorage.getItem('blankSettings');
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return {
+  const fallback: BlankSettings = {
     style: 'black',
     logoUrl: '',
     softBgUrl: '',
     sessionScreens: DEFAULT_SESSION_SCREENS,
     activeSessionId: 'prayer',
+    backgrounds: [],
+    activeBackgroundId: '',
   };
+  try {
+    const stored = localStorage.getItem('blankSettings');
+    if (stored) {
+      const parsed = JSON.parse(stored) as Partial<BlankSettings>;
+      // Merge with fallback to handle migrations (old payloads lack new fields)
+      return {
+        ...fallback,
+        ...parsed,
+        sessionScreens: parsed.sessionScreens ?? fallback.sessionScreens,
+        backgrounds: parsed.backgrounds ?? fallback.backgrounds,
+        activeBackgroundId: parsed.activeBackgroundId ?? fallback.activeBackgroundId,
+      };
+    }
+  } catch {}
+  return fallback;
 }
 
 export function saveBlankSettings(settings: BlankSettings): void {

@@ -2,12 +2,13 @@ import { useEffect, useLayoutEffect, useState, useRef, useCallback } from 'react
 import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, loadPersistedProjectionState, getChannel } from '@/core/broadcastSync';
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
-import { loadAllAssets, type AssetType } from '@/core/assetStorage';
+import { loadAllAssets } from '@/core/assetStorage';
 
-function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetUrls: Record<AssetType, string> }) {
+function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetUrls: Record<string, string> }) {
   const session = settings.sessionScreens.find(s => s.id === settings.activeSessionId);
   const logoSrc = assetUrls.logo || settings.logoUrl;
-  const bgSrc = assetUrls.softBackground || settings.softBgUrl;
+  const activeBgUrl = settings.activeBackgroundId ? assetUrls[settings.activeBackgroundId] : '';
+  const bgSrc = activeBgUrl || assetUrls.softBackground || settings.softBgUrl;
 
   switch (settings.style) {
     case 'logo':
@@ -143,8 +144,10 @@ const Projection = () => {
     softBgUrl: '',
     sessionScreens: [],
     activeSessionId: '',
+    backgrounds: [],
+    activeBackgroundId: '',
   });
-  const [assetUrls, setAssetUrls] = useState<Record<AssetType, string>>({ logo: '', softBackground: '' });
+  const [assetUrls, setAssetUrls] = useState<Record<string, string>>({});
 
   // Load persisted state immediately on mount (refresh-safe)
   useEffect(() => {
