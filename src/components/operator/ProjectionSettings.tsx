@@ -196,11 +196,12 @@ export function ProjectionSettings() {
   }, [view]);
 
   return (
-    // Viewport-bound container: header sticks, body scrolls inside.
-    <div className="flex flex-col" style={{ maxHeight: 'min(80vh, 560px)' }}>
-      <div className="shrink-0">{Header}</div>
+    // Fills parent (PopoverContent) which is the single viewport-bound shell.
+    // Header is non-scrollable; only the content area owns vertical overflow.
+    <div className="flex flex-col flex-1 min-h-0 h-full">
+      <div className="shrink-0 px-3 pt-3">{Header}</div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-6">
         {view === 'main' && (
           <MainView
             settings={settings}
