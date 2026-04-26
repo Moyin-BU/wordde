@@ -59,8 +59,8 @@ function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetU
 }
 
 function AutoFitVerse({ passage }: { passage: Passage }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
+  const verseBoundsRef = useRef<HTMLDivElement>(null);
+  const verseTextRef = useRef<HTMLDivElement>(null);
 
   const verseContent = passage.verses.map(v => v.text).join(' ');
   const reference = passage.displayReference;
@@ -68,27 +68,9 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
   const translationName = TRANSLATION_NAMES[translationCode] || translationCode;
 
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    const text = textRef.current;
-    if (!container || !text) return;
-
-    const MAX_FONT_SIZE = 72;
-    const MIN_FONT_SIZE = 16;
-    const STEP = 2;
-
-    let currentSize = MAX_FONT_SIZE;
-    text.style.fontSize = currentSize + 'px';
-
-    while (text.scrollHeight > container.clientHeight && currentSize > MIN_FONT_SIZE) {
-      currentSize -= STEP;
-      text.style.fontSize = currentSize + 'px';
-    }
-  }, [verseContent, reference]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const container = containerRef.current;
-      const text = textRef.current;
+    const fit = () => {
+      const container = verseBoundsRef.current;
+      const text = verseTextRef.current;
       if (!container || !text) return;
 
       const MAX_FONT_SIZE = 72;
@@ -98,53 +80,61 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
       let currentSize = MAX_FONT_SIZE;
       text.style.fontSize = currentSize + 'px';
 
-      while (text.scrollHeight > container.clientHeight && currentSize > MIN_FONT_SIZE) {
+      while (
+        (text.scrollHeight > container.clientHeight || text.scrollWidth > container.clientWidth) &&
+        currentSize > MIN_FONT_SIZE
+      ) {
         currentSize -= STEP;
         text.style.fontSize = currentSize + 'px';
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [verseContent, reference]);
 
   return (
     <div
-      ref={containerRef}
-      className="overflow-hidden relative"
-      style={{ height: 'calc(100vh - 0px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}
+      className="h-screen w-screen flex flex-col"
+      style={{ padding: '2rem' }}
     >
+      {/* VerseContainer — flexes to fill available space.
+          ONLY this region participates in auto-fit measurement. */}
       <div
-        ref={textRef}
-        className="text-center"
-        style={{ maxWidth: '70%', margin: '0 auto' }}
+        ref={verseBoundsRef}
+        className="flex-1 min-h-0 flex items-center justify-center overflow-hidden"
       >
-        <blockquote className="font-serif leading-relaxed tracking-wide text-projection-foreground" style={{ marginBottom: '0.5em' }}>
-          {passage.verses.map((verse, index) => (
-            <span key={verse.verse}>
-              {passage.verses.length > 1 && (
-                <sup className="opacity-50 mr-1" style={{ fontSize: '0.35em' }}>{verse.verse}</sup>
-              )}
-              {verse.text}
-              {index < passage.verses.length - 1 && ' '}
-            </span>
-          ))}
-        </blockquote>
-        <p
-          className="font-sans font-medium tracking-widest uppercase text-projection-foreground/70"
-          style={{ fontSize: '0.35em' }}
+        <div
+          ref={verseTextRef}
+          className="text-center"
+          style={{ maxWidth: '70%' }}
         >
+          <blockquote className="font-serif leading-relaxed tracking-wide text-projection-foreground m-0">
+            {passage.verses.map((verse, index) => (
+              <span key={verse.verse}>
+                {passage.verses.length > 1 && (
+                  <sup className="opacity-50 mr-1" style={{ fontSize: '0.35em' }}>{verse.verse}</sup>
+                )}
+                {verse.text}
+                {index < passage.verses.length - 1 && ' '}
+              </span>
+            ))}
+          </blockquote>
+        </div>
+      </div>
+
+      {/* MetaContainer — fixed layout, OUTSIDE auto-fit bounds.
+          Reserved space prevents overlap and ensures consistent spacing
+          regardless of verse length. */}
+      <div className="shrink-0 flex flex-col items-center gap-2 pt-6 pb-2">
+        <p className="font-sans font-medium tracking-widest uppercase text-projection-foreground/70 text-base md:text-lg m-0">
           {reference}
         </p>
+        <p className="font-sans font-light tracking-wider uppercase text-projection-foreground/40 text-xs md:text-sm m-0">
+          {translationName}
+        </p>
       </div>
-      {/* Translation label — rendered OUTSIDE the auto-fit container so it never
-          influences font scaling or height calculations. Fixed to viewport bottom. */}
-      <p
-        className="absolute left-0 right-0 bottom-6 text-center font-sans font-light tracking-wider uppercase text-projection-foreground/40 pointer-events-none"
-        style={{ fontSize: 'clamp(0.625rem, 1.1vh, 0.875rem)' }}
-      >
-        {translationName}
-      </p>
     </div>
   );
 }
