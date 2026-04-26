@@ -75,8 +75,7 @@ export function OperatorScreen() {
     if (!isBibleLoaded) {
       setLoading(true);
       Promise.all([
-        BibleRepository.loadTranslation('KJV'),
-        BibleRepository.loadTranslation('NIV'),
+        BibleRepository.preloadAllTranslations(),
         SearchEngine.loadSemanticIndex('/data/semanticIndex.json'),
       ])
         .then(() => {
