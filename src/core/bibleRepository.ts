@@ -59,16 +59,29 @@ class BibleRepositoryClass {
       const zip = await JSZip.loadAsync(zipData);
 
       const booksMap = new Map<string, BibleBook>();
+      const aggregatedMetadata: TranslationMetadata = {};
       const bookPromises: Promise<void>[] = [];
 
       zip.forEach((relativePath, file) => {
         if (relativePath.endsWith('.json') && !file.dir) {
           const promise = file.async('text').then((content) => {
             try {
-              const bookData: BibleBook = JSON.parse(content);
-              if (bookData.book && bookData.chapters) {
+              // Route every file through the normalization layer.
+              // Downstream code only ever sees the canonical BibleBook shape,
+              // regardless of whether the source file is canonical, an array,
+              // or the new nested-object format with an `Info` block.
+              const raw: unknown = JSON.parse(content);
+              const { books, metadata } = normalizeBibleJson(raw);
+
+              // Merge metadata from any file in the archive (Info blocks
+              // typically appear once per translation, but multiple files
+              // are tolerated — last write wins per key).
+              Object.assign(aggregatedMetadata, metadata);
+
+              for (const bookData of books) {
+                if (!bookData.book || !Array.isArray(bookData.chapters)) continue;
                 booksMap.set(bookData.book.toLowerCase(), bookData);
-                // Only populate bookNames and aliases from first loaded translation
+                // Populate bookNames/aliases on first sighting of each book.
                 if (this.bookNames.length === 0 || !this.bookAliases.has(bookData.book.toLowerCase())) {
                   this.setupBookAliases(bookData.book);
                 }
@@ -84,6 +97,7 @@ class BibleRepositoryClass {
       await Promise.all(bookPromises);
 
       this.translations.set(translation, booksMap);
+      this.translationMetadata.set(translation, aggregatedMetadata);
       this.loadedTranslations.add(translation);
 
       // Build book name list from first translation loaded
