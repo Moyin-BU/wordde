@@ -90,7 +90,8 @@ export function ProjectionControl() {
   useEffect(() => {
     const unsub = onBroadcastMessage((msg) => {
       if (msg.type === 'PROJECTOR_READY') {
-        if (status === 'connecting') {
+        if (status === 'connecting' && !autoPlacedRef.current) {
+          // Only show manual setup helper when we couldn't auto-place on an external screen
           setShowSetup(true);
         }
         setStatus('active');
