@@ -143,8 +143,6 @@ export function ProjectionControl() {
     return () => clearInterval(interval);
   }, []);
 
-  const autoPlacedRef = useRef(false);
-
   const startProjection = useCallback(async () => {
     // If window exists and is open, just focus
     if (projectorWindowRef.current && !projectorWindowRef.current.closed) {
