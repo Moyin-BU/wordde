@@ -111,7 +111,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
   return (
     <div
       ref={containerRef}
-      className="overflow-hidden"
+      className="overflow-hidden relative"
       style={{ height: 'calc(100vh - 0px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}
     >
       <div
@@ -137,6 +137,14 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
           {reference}
         </p>
       </div>
+      {/* Translation label — rendered OUTSIDE the auto-fit container so it never
+          influences font scaling or height calculations. Fixed to viewport bottom. */}
+      <p
+        className="absolute left-0 right-0 bottom-6 text-center font-sans font-light tracking-wider uppercase text-projection-foreground/40 pointer-events-none"
+        style={{ fontSize: 'clamp(0.625rem, 1.1vh, 0.875rem)' }}
+      >
+        {translationName}
+      </p>
     </div>
   );
 }
