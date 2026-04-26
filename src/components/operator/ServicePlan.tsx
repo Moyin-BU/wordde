@@ -84,7 +84,7 @@ export function ServicePlan() {
   // Delete confirmation state
   const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
 
-  const { buildQueueFromPassage, buildQueueFromChapter } = useStateManager();
+  const { buildQueueFromPassage, buildQueueFromChapter, currentTranslation } = useStateManager();
 
   useEffect(() => { saveServices(services); }, [services]);
 
@@ -105,7 +105,7 @@ export function ServicePlan() {
       const [, bookPart, chapter, verseStart, verseEnd] = rangeMatch;
       const bookName = BibleRepository.resolveBookName(bookPart.trim());
       if (!bookName) return;
-      const passage = BibleRepository.getPassage({ book: bookName, chapter, verseStart, verseEnd, translation: 'KJV' });
+      const passage = BibleRepository.getPassage({ book: bookName, chapter, verseStart, verseEnd, translation: currentTranslation });
       if (passage) buildQueueFromPassage(passage);
       return;
     }

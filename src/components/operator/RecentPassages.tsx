@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Clock, Play, Trash2, X } from 'lucide-react';
 
 export function RecentPassages() {
-  const { recentPassages, projectionQueue, buildQueueFromPassage, buildQueueFromChapter, removeFromRecent, clearAllRecent } = useStateManager();
+  const { recentPassages, projectionQueue, buildQueueFromPassage, buildQueueFromChapter, removeFromRecent, clearAllRecent, currentTranslation } = useStateManager();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
 
@@ -18,7 +18,7 @@ export function RecentPassages() {
       const [, bookPart, chapter, verseStart, verseEnd] = rangeMatch;
       const bookName = BibleRepository.resolveBookName(bookPart.trim());
       if (!bookName) return;
-      const passage = BibleRepository.getPassage({ book: bookName, chapter, verseStart, verseEnd, translation: 'KJV' });
+      const passage = BibleRepository.getPassage({ book: bookName, chapter, verseStart, verseEnd, translation: currentTranslation });
       if (passage) buildQueueFromPassage(passage);
       return;
     }
@@ -30,7 +30,7 @@ export function RecentPassages() {
       if (!bookName) return;
       buildQueueFromChapter(bookName, chapter);
     }
-  }, [buildQueueFromPassage, buildQueueFromChapter]);
+  }, [buildQueueFromPassage, buildQueueFromChapter, currentTranslation]);
 
   const isActive = useCallback((reference: string) => {
     if (!projectionQueue.length) return false;
