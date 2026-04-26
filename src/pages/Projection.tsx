@@ -3,11 +3,7 @@ import { onBroadcastMessage, requestCurrentState, broadcastHeartbeat, loadPersis
 import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets } from '@/core/assetStorage';
-
-const TRANSLATION_NAMES: Record<string, string> = {
-  KJV: 'King James Version (KJV)',
-  NIV: 'New International Version (NIV)',
-};
+import { getTranslationDisplayName } from '@/core/translationMetadata';
 
 function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetUrls: Record<string, string> }) {
   const session = settings.sessionScreens.find(s => s.id === settings.activeSessionId);
