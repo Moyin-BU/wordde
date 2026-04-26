@@ -1,10 +1,62 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { useStateManager } from '@/core/stateManager';
-import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2 } from 'lucide-react';
+import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const PROJECTOR_POSITION_KEY = 'projectorWindowPosition';
+
+/**
+ * Compute window features for opening the projector.
+ * Tier 1: Window Management API (Chrome/Edge 100+) → external screen auto-detected.
+ * Tier 2: Saved position from a prior session.
+ * Tier 3: Sensible default size.
+ */
+async function computeWindowFeatures(): Promise<{ features: string; usedExternalScreen: boolean }> {
+  // Tier 1: Modern Window Management API
+  if ('getScreenDetails' in window) {
+    try {
+      const permission = await navigator.permissions.query({
+        name: 'window-management' as PermissionName,
+      });
+
+      if (permission.state === 'granted' || permission.state === 'prompt') {
+        const screens = await (window as any).getScreenDetails();
+        const externalScreen =
+          screens.screens.find((s: any) => !s.isPrimary) || screens.currentScreen;
+
+        const { availLeft, availTop, availWidth, availHeight, isPrimary } = externalScreen;
+        console.log('[Projector] Opening on screen:', {
+          isPrimary,
+          left: availLeft,
+          top: availTop,
+          width: availWidth,
+          height: availHeight,
+        });
+
+        return {
+          features: `left=${availLeft},top=${availTop},width=${availWidth},height=${availHeight}`,
+          usedExternalScreen: !isPrimary,
+        };
+      }
+    } catch (err) {
+      console.warn('[Projector] Window Management API failed, falling back:', err);
+    }
+  }
+
+  // Tier 2: Saved position
+  const saved = localStorage.getItem(PROJECTOR_POSITION_KEY);
+  if (saved) {
+    console.log('[Projector] Using saved position:', saved);
+    return { features: saved, usedExternalScreen: false };
+  }
+
+  // Tier 3: Default
+  return { features: 'width=1920,height=1080', usedExternalScreen: false };
+}
 
 export type ProjectionStatus = 'idle' | 'connecting' | 'active' | 'disconnected';
 
@@ -31,6 +83,7 @@ export function ProjectionControl() {
   const [showSetup, setShowSetup] = useState(false);
   const projectorWindowRef = useRef<Window | null>(null);
   const lastHeartbeatRef = useRef<number>(0);
+  const autoPlacedRef = useRef(false);
 
   const { committedPassage, isScreenBlanked } = useStateManager();
 
@@ -38,7 +91,8 @@ export function ProjectionControl() {
   useEffect(() => {
     const unsub = onBroadcastMessage((msg) => {
       if (msg.type === 'PROJECTOR_READY') {
-        if (status === 'connecting') {
+        if (status === 'connecting' && !autoPlacedRef.current) {
+          // Only show manual setup helper when we couldn't auto-place on an external screen
           setShowSetup(true);
         }
         setStatus('active');
@@ -89,7 +143,7 @@ export function ProjectionControl() {
     return () => clearInterval(interval);
   }, []);
 
-  const startProjection = useCallback(() => {
+  const startProjection = useCallback(async () => {
     // If window exists and is open, just focus
     if (projectorWindowRef.current && !projectorWindowRef.current.closed) {
       projectorWindowRef.current.focus();
@@ -106,11 +160,42 @@ export function ProjectionControl() {
     }
 
     setStatus('connecting');
-    projectorWindowRef.current = window.open(
-      '/projection',
-      'projectionWindow',
-      'width=1280,height=720'
-    );
+
+    const { features, usedExternalScreen } = await computeWindowFeatures();
+    const newWindow = window.open('/projection', 'projectionWindow', features);
+
+    if (!newWindow) {
+      setStatus('idle');
+      toast.error('Popup blocked', {
+        description: 'Please allow popups for this site and try again.',
+      });
+      return;
+    }
+
+    projectorWindowRef.current = newWindow;
+    autoPlacedRef.current = usedExternalScreen;
+
+    // Auto-fullscreen on load
+    newWindow.addEventListener('load', () => {
+      try {
+        newWindow.document.documentElement.requestFullscreen?.().catch((err) => {
+          console.warn('[Projector] Auto-fullscreen blocked:', err);
+        });
+      } catch (err) {
+        console.warn('[Projector] requestFullscreen threw:', err);
+      }
+    });
+
+    // Save position on close (used as fallback next time)
+    newWindow.addEventListener('beforeunload', () => {
+      try {
+        const { screenLeft, screenTop, outerWidth, outerHeight } = newWindow;
+        const position = `left=${screenLeft},top=${screenTop},width=${outerWidth},height=${outerHeight}`;
+        localStorage.setItem(PROJECTOR_POSITION_KEY, position);
+      } catch (err) {
+        console.warn('[Projector] Failed to save position:', err);
+      }
+    });
 
     // Send INIT state after a short delay
     setTimeout(() => {
@@ -125,6 +210,13 @@ export function ProjectionControl() {
 
   const handleSetupComplete = useCallback(() => {
     setShowSetup(false);
+  }, []);
+
+  const resetProjectorPosition = useCallback(() => {
+    localStorage.removeItem(PROJECTOR_POSITION_KEY);
+    toast.success('Projector position reset', {
+      description: 'Next time you open the projector, default position will be used.',
+    });
   }, []);
 
   const statusConfig = {
@@ -188,6 +280,16 @@ export function ProjectionControl() {
         >
           <Icon className="h-3.5 w-3.5" />
           {config.label}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={resetProjectorPosition}
+          title="Reset saved projector window position"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
         </Button>
       </div>
 
