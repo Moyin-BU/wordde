@@ -24,7 +24,7 @@ interface StateManager extends AppState {
   setSelectedIndex: (index: number) => void;
   commitPassage: () => void;
   clearPreview: () => void;
-  setTranslation: (translation: string) => void;
+  setTranslation: (translation: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setBibleLoaded: (loaded: boolean) => void;
 
@@ -263,7 +263,29 @@ export const useStateManager = create<StateManager>((set, get) => ({
     });
   },
 
-  setTranslation: (translation) => {
+  setTranslation: async (translation) => {
+    const previousTranslation = get().currentTranslation;
+    if (translation === previousTranslation && BibleRepository.isTranslationLoaded(translation)) {
+      return;
+    }
+
+    // Lazy-load translation on first selection. Keeps KJV/NIV preloaded behavior
+    // intact while supporting NKJV/NLT/AMP (and any future additions) on demand.
+    if (!BibleRepository.isTranslationLoaded(translation)) {
+      try {
+        set({ isLoading: true });
+        console.log(`[setTranslation] Loading "${translation}"...`);
+        await BibleRepository.loadTranslation(translation);
+      } catch (error) {
+        console.error(`[setTranslation] Failed to load "${translation}":`, error);
+        // Stay on the previously working translation — do NOT force-revert to KJV.
+        set({ isLoading: false });
+        return;
+      } finally {
+        set({ isLoading: false });
+      }
+    }
+
     set({ currentTranslation: translation });
     BibleRepository.setCurrentTranslation(translation);
 
@@ -281,6 +303,10 @@ export const useStateManager = create<StateManager>((set, get) => ({
         const slides = passageToSlides(passage);
         set({ projectionQueue: slides, currentSlideIndex: 0 });
         get()._commitWithOldSlide(liveSlide);
+      } else {
+        console.warn(
+          `[setTranslation] Live slide ${liveSlide.reference} not found in ${translation}; leaving queue as-is.`,
+        );
       }
     }
   },
