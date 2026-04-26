@@ -281,6 +281,16 @@ export function ProjectionControl() {
           <Icon className="h-3.5 w-3.5" />
           {config.label}
         </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={resetProjectorPosition}
+          title="Reset saved projector window position"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
       {/* Setup Guide Dialog */}
