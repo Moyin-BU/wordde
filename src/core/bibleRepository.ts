@@ -4,6 +4,7 @@
 
 import JSZip from 'jszip';
 import type { BibleBook, Passage, PassageReference, Verse } from './types';
+import { normalizeBibleJson, type TranslationMetadata } from './bibleNormalizer';
 
 /** Map of translation code → zip file path */
 const TRANSLATION_ZIPS: Record<string, string> = {
