@@ -168,6 +168,24 @@ class BibleRepositoryClass {
     await this.loadTranslation('KJV');
   }
 
+  /**
+   * Preload all configured translations in parallel.
+   * Called once on app boot to eliminate translation-switch lag during a live service.
+   */
+  async preloadAllTranslations(): Promise<void> {
+    const translations = Object.keys(TRANSLATION_ZIPS);
+    console.log(`[BibleRepository] Preloading ${translations.length} translations:`, translations);
+    const startTime = performance.now();
+    try {
+      await Promise.all(translations.map((t) => this.loadTranslation(t)));
+      const elapsed = Math.round(performance.now() - startTime);
+      console.log(`[BibleRepository] ✅ All translations loaded in ${elapsed}ms`);
+    } catch (error) {
+      console.error('[BibleRepository] Failed to preload translations:', error);
+      throw error;
+    }
+  }
+
   // --- Private helpers ---
 
   private getBooksMap(translation?: string): Map<string, BibleBook> {
