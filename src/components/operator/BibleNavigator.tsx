@@ -32,7 +32,7 @@ export function BibleNavigator() {
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
 
-  const { buildQueueFromPassage, buildQueueFromChapter } = useStateManager();
+  const { buildQueueFromPassage, buildQueueFromChapter, currentTranslation } = useStateManager();
 
   const allBooks = useMemo(() => BibleRepository.getAllBooks(), []);
 
@@ -72,12 +72,12 @@ export function BibleNavigator() {
       book: selectedBook,
       chapter: selectedChapter,
       verseStart: verseNum,
-      translation: 'KJV',
+      translation: currentTranslation,
     });
     if (passage) {
       buildQueueFromPassage(passage);
     }
-  }, [selectedBook, selectedChapter, buildQueueFromPassage]);
+  }, [selectedBook, selectedChapter, buildQueueFromPassage, currentTranslation]);
 
   const goBack = useCallback(() => {
     if (level === 'verses') {
