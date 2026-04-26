@@ -3,8 +3,7 @@
 
 import type { Passage } from './types';
 
-export const BROADCAST_CHANNEL_NAME = 'bible-projection-sync';
-const CHANNEL_NAME = BROADCAST_CHANNEL_NAME;
+const CHANNEL_NAME = 'bible-projection-sync';
 
 export type BlankStyle = 'black' | 'logo' | 'soft' | 'session';
 
@@ -80,7 +79,6 @@ export type BroadcastMessage =
   | { type: 'RELOAD_ASSETS' }
   | { type: 'HEARTBEAT'; timestamp: number }
   | { type: 'PROJECTOR_READY' }
-  | { type: 'REQUEST_FULLSCREEN' }
   | { type: 'SYNC'; payload: Passage | null; isBlanked: boolean; blankSettings?: BlankSettings };
 
 let channel: BroadcastChannel | null = null;

@@ -218,14 +218,6 @@ const Projection = () => {
       } else if (msg.type === 'RELOAD_ASSETS') {
         Object.values(assetUrls).forEach(u => { if (u) URL.revokeObjectURL(u); });
         loadAllAssets().then(setAssetUrls);
-      } else if (msg.type === 'REQUEST_FULLSCREEN') {
-        try {
-          document.documentElement.requestFullscreen?.().catch((err) => {
-            console.warn('[Projection] Fullscreen request rejected:', err);
-          });
-        } catch (err) {
-          console.warn('[Projection] requestFullscreen threw:', err);
-        }
       }
     });
 
