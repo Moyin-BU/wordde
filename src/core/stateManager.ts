@@ -100,7 +100,7 @@ function chapterToSlides(book: string, chapter: string, translation?: string): S
   }));
 }
 
-function slideToPassage(slide: Slide, translation: string = 'KJV'): Passage {
+function slideToPassage(slide: Slide, translation: string): Passage {
   return {
     reference: {
       book: slide.book,
