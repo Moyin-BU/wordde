@@ -3,7 +3,8 @@
 
 import type { Passage } from './types';
 
-const CHANNEL_NAME = 'bible-projection-sync';
+export const BROADCAST_CHANNEL_NAME = 'bible-projection-sync';
+const CHANNEL_NAME = BROADCAST_CHANNEL_NAME;
 
 export type BlankStyle = 'black' | 'logo' | 'soft' | 'session';
 
