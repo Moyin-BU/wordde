@@ -24,7 +24,7 @@ interface StateManager extends AppState {
   setSelectedIndex: (index: number) => void;
   commitPassage: () => void;
   clearPreview: () => void;
-  setTranslation: (translation: string) => void;
+  setTranslation: (translation: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setBibleLoaded: (loaded: boolean) => void;
 
