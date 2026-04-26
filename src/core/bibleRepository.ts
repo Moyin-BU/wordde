@@ -15,6 +15,8 @@ const TRANSLATION_ZIPS: Record<string, string> = {
 class BibleRepositoryClass {
   /** Per-translation book data */
   private translations: Map<string, Map<string, BibleBook>> = new Map();
+  /** Per-translation metadata extracted from incoming files (e.g. "Info" block) */
+  private translationMetadata: Map<string, TranslationMetadata> = new Map();
   /** Canonical book order (same across translations) */
   private bookNames: string[] = [];
   private loadedTranslations: Set<string> = new Set();
