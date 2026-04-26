@@ -269,20 +269,16 @@ export const useStateManager = create<StateManager>((set, get) => ({
       return;
     }
 
-    // Lazy-load translation on first selection. Keeps KJV/NIV preloaded behavior
-    // intact while supporting NKJV/NLT/AMP (and any future additions) on demand.
+    // Translations are preloaded on app boot. This is normally a no-op,
+    // but we keep the guard so manual reloads or future translations still work.
     if (!BibleRepository.isTranslationLoaded(translation)) {
       try {
-        set({ isLoading: true });
-        console.log(`[setTranslation] Loading "${translation}"...`);
+        console.log(`[setTranslation] "${translation}" not preloaded; loading on demand…`);
         await BibleRepository.loadTranslation(translation);
       } catch (error) {
         console.error(`[setTranslation] Failed to load "${translation}":`, error);
         // Stay on the previously working translation — do NOT force-revert to KJV.
-        set({ isLoading: false });
         return;
-      } finally {
-        set({ isLoading: false });
       }
     }
 
