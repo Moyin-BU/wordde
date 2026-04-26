@@ -17,8 +17,11 @@ import { normalizeBibleJson, type TranslationMetadata } from './bibleNormalizer'
  * nested-object format with an `Info` block. The normalizer handles all three.
  */
 const TRANSLATION_ZIPS: Record<string, string> = {
-  KJV: '/data/KJV_Bible_JSON.zip',
-  NIV: '/data/NIV_Bible_JSON.zip',
+  KJV:  '/data/KJV_Bible_JSON.zip',
+  NIV:  '/data/NIV_Bible_JSON.zip',
+  NKJV: '/data/NKJV.zip',
+  NLT:  '/data/NLT.zip',
+  AMP:  '/data/AMP.zip',
 };
 
 class BibleRepositoryClass {
