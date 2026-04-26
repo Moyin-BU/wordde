@@ -1,10 +1,62 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
 import { useStateManager } from '@/core/stateManager';
-import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2 } from 'lucide-react';
+import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+const PROJECTOR_POSITION_KEY = 'projectorWindowPosition';
+
+/**
+ * Compute window features for opening the projector.
+ * Tier 1: Window Management API (Chrome/Edge 100+) → external screen auto-detected.
+ * Tier 2: Saved position from a prior session.
+ * Tier 3: Sensible default size.
+ */
+async function computeWindowFeatures(): Promise<{ features: string; usedExternalScreen: boolean }> {
+  // Tier 1: Modern Window Management API
+  if ('getScreenDetails' in window) {
+    try {
+      const permission = await navigator.permissions.query({
+        name: 'window-management' as PermissionName,
+      });
+
+      if (permission.state === 'granted' || permission.state === 'prompt') {
+        const screens = await (window as any).getScreenDetails();
+        const externalScreen =
+          screens.screens.find((s: any) => !s.isPrimary) || screens.currentScreen;
+
+        const { availLeft, availTop, availWidth, availHeight, isPrimary } = externalScreen;
+        console.log('[Projector] Opening on screen:', {
+          isPrimary,
+          left: availLeft,
+          top: availTop,
+          width: availWidth,
+          height: availHeight,
+        });
+
+        return {
+          features: `left=${availLeft},top=${availTop},width=${availWidth},height=${availHeight}`,
+          usedExternalScreen: !isPrimary,
+        };
+      }
+    } catch (err) {
+      console.warn('[Projector] Window Management API failed, falling back:', err);
+    }
+  }
+
+  // Tier 2: Saved position
+  const saved = localStorage.getItem(PROJECTOR_POSITION_KEY);
+  if (saved) {
+    console.log('[Projector] Using saved position:', saved);
+    return { features: saved, usedExternalScreen: false };
+  }
+
+  // Tier 3: Default
+  return { features: 'width=1920,height=1080', usedExternalScreen: false };
+}
 
 export type ProjectionStatus = 'idle' | 'connecting' | 'active' | 'disconnected';
 
