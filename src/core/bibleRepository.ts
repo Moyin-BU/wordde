@@ -70,62 +70,90 @@ class BibleRepositoryClass {
 
     try {
       const response = await fetch(zipPath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${zipPath}: HTTP ${response.status}`);
+      }
       const zipData = await response.arrayBuffer();
       const zip = await JSZip.loadAsync(zipData);
 
       const booksMap = new Map<string, BibleBook>();
       const aggregatedMetadata: TranslationMetadata = {};
-      const bookPromises: Promise<void>[] = [];
+      const parseErrors: string[] = [];
+      let jsonFileCount = 0;
+      const filePromises: Promise<void>[] = [];
 
       zip.forEach((relativePath, file) => {
-        if (relativePath.endsWith('.json') && !file.dir) {
-          const promise = file.async('text').then((content) => {
-            try {
-              // Route every file through the normalization layer.
-              // Downstream code only ever sees the canonical BibleBook shape,
-              // regardless of whether the source file is canonical, an array,
-              // or the new nested-object format with an `Info` block.
-              const raw: unknown = JSON.parse(content);
-              const { books, metadata } = normalizeBibleJson(raw);
+        if (!relativePath.endsWith('.json') || file.dir) return;
+        jsonFileCount++;
 
-              // Merge metadata from any file in the archive (Info blocks
-              // typically appear once per translation, but multiple files
-              // are tolerated — last write wins per key).
-              Object.assign(aggregatedMetadata, metadata);
+        const promise = file.async('text').then((content) => {
+          let raw: unknown;
+          try {
+            raw = JSON.parse(content);
+          } catch (e) {
+            parseErrors.push(`${relativePath}: invalid JSON (${(e as Error).message})`);
+            return;
+          }
 
-              for (const bookData of books) {
-                if (!bookData.book || !Array.isArray(bookData.chapters)) continue;
-                booksMap.set(bookData.book.toLowerCase(), bookData);
-                // Populate bookNames/aliases on first sighting of each book.
-                if (this.bookNames.length === 0 || !this.bookAliases.has(bookData.book.toLowerCase())) {
-                  this.setupBookAliases(bookData.book);
-                }
-              }
-            } catch (e) {
-              console.warn(`Failed to parse ${relativePath}:`, e);
+          // Route every file through the normalization layer.
+          // Downstream code only ever sees the canonical BibleBook shape,
+          // regardless of whether the source file is canonical, an array,
+          // or the nested-object format with an `Info` block.
+          const { books, metadata } = normalizeBibleJson(raw);
+
+          // Merge metadata from any file in the archive (Info blocks
+          // typically appear once per translation; last write wins per key).
+          Object.assign(aggregatedMetadata, metadata);
+
+          for (const bookData of books) {
+            if (!bookData.book || !Array.isArray(bookData.chapters)) continue;
+            const key = bookData.book.toLowerCase();
+            if (booksMap.has(key)) {
+              // Fail-soft on duplicates: keep first occurrence so a stray
+              // duplicate file doesn't silently overwrite verified data.
+              console.warn(
+                `[BibleRepository] Duplicate book "${bookData.book}" in ${translation}; keeping first occurrence.`,
+              );
+              continue;
             }
-          });
-          bookPromises.push(promise);
-        }
+            booksMap.set(key, bookData);
+            if (!this.bookAliases.has(key)) {
+              this.setupBookAliases(bookData.book);
+            }
+          }
+        });
+        filePromises.push(promise);
       });
 
-      await Promise.all(bookPromises);
+      await Promise.all(filePromises);
+
+      if (jsonFileCount === 0) {
+        throw new Error(`No .json files found inside ${zipPath}`);
+      }
+      if (booksMap.size === 0) {
+        const detail = parseErrors.length ? ` (${parseErrors.join('; ')})` : '';
+        throw new Error(`No valid books found in ${translation}${detail}`);
+      }
 
       this.translations.set(translation, booksMap);
       this.translationMetadata.set(translation, aggregatedMetadata);
       this.loadedTranslations.add(translation);
 
-      // Build book name list from first translation loaded
+      // Build canonical book order from the first translation loaded
+      // (all translations share the 66-book canon).
       if (this.bookNames.length === 0) {
         const names: string[] = [];
-        for (const book of booksMap.values()) {
-          names.push(book.book);
-        }
+        for (const book of booksMap.values()) names.push(book.book);
         this.bookNames = this.sortBooksInOrder(names);
       }
+
+      console.log(
+        `[BibleRepository] Loaded ${translation}: ${booksMap.size} books`,
+        aggregatedMetadata,
+      );
     } catch (error) {
       console.error(`Failed to load ${translation} Bible data:`, error);
-      throw new Error(`Failed to load ${translation} Bible data`);
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
 
