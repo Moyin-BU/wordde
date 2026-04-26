@@ -172,7 +172,15 @@ class BibleRepositoryClass {
 
   private getBooksMap(translation?: string): Map<string, BibleBook> {
     const t = translation || this.currentTranslation;
-    return this.translations.get(t) || this.translations.values().next().value || new Map();
+    const map = this.translations.get(t);
+    if (map) return map;
+    // Do NOT silently fall back to another translation — that produces the
+    // "label says NIV, text is KJV" mismatch bug. Callers must ensure the
+    // translation is loaded (via loadTranslation) before requesting data.
+    console.warn(
+      `[BibleRepository] getBooksMap: translation "${t}" not loaded; returning empty map.`,
+    );
+    return new Map();
   }
 
   private setupBookAliases(bookName: string): void {
