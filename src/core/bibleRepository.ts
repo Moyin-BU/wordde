@@ -43,6 +43,12 @@ class BibleRepositoryClass {
     return this.currentTranslation;
   }
 
+  /** Read translation metadata extracted at load time (e.g. from `Info` blocks). */
+  getTranslationMetadata(translation?: string): TranslationMetadata {
+    const t = translation || this.currentTranslation;
+    return this.translationMetadata.get(t) || {};
+  }
+
   /**
    * Load a single translation from its zip file.
    * Can be called multiple times for different translations.
