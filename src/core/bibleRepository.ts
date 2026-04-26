@@ -6,7 +6,16 @@ import JSZip from 'jszip';
 import type { BibleBook, Passage, PassageReference, Verse } from './types';
 import { normalizeBibleJson, type TranslationMetadata } from './bibleNormalizer';
 
-/** Map of translation code → zip file path */
+/**
+ * Map of translation code → zip file path.
+ *
+ * To add a new translation:
+ *   1. Drop `<CODE>.zip` (or any zip containing one or more `.json` files) into /public/data/
+ *   2. Add an entry below: `<CODE>: '/data/<file>.zip'`
+ *
+ * The JSON inside may be canonical, an array of canonical books, or the
+ * nested-object format with an `Info` block. The normalizer handles all three.
+ */
 const TRANSLATION_ZIPS: Record<string, string> = {
   KJV: '/data/KJV_Bible_JSON.zip',
   NIV: '/data/NIV_Bible_JSON.zip',
