@@ -83,6 +83,7 @@ export function ProjectionControl() {
   const [showSetup, setShowSetup] = useState(false);
   const projectorWindowRef = useRef<Window | null>(null);
   const lastHeartbeatRef = useRef<number>(0);
+  const autoPlacedRef = useRef(false);
 
   const { committedPassage, isScreenBlanked } = useStateManager();
 
