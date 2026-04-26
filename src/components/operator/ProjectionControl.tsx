@@ -141,7 +141,9 @@ export function ProjectionControl() {
     return () => clearInterval(interval);
   }, []);
 
-  const startProjection = useCallback(() => {
+  const autoPlacedRef = useRef(false);
+
+  const startProjection = useCallback(async () => {
     // If window exists and is open, just focus
     if (projectorWindowRef.current && !projectorWindowRef.current.closed) {
       projectorWindowRef.current.focus();
@@ -158,11 +160,42 @@ export function ProjectionControl() {
     }
 
     setStatus('connecting');
-    projectorWindowRef.current = window.open(
-      '/projection',
-      'projectionWindow',
-      'width=1280,height=720'
-    );
+
+    const { features, usedExternalScreen } = await computeWindowFeatures();
+    const newWindow = window.open('/projection', 'projectionWindow', features);
+
+    if (!newWindow) {
+      setStatus('idle');
+      toast.error('Popup blocked', {
+        description: 'Please allow popups for this site and try again.',
+      });
+      return;
+    }
+
+    projectorWindowRef.current = newWindow;
+    autoPlacedRef.current = usedExternalScreen;
+
+    // Auto-fullscreen on load
+    newWindow.addEventListener('load', () => {
+      try {
+        newWindow.document.documentElement.requestFullscreen?.().catch((err) => {
+          console.warn('[Projector] Auto-fullscreen blocked:', err);
+        });
+      } catch (err) {
+        console.warn('[Projector] requestFullscreen threw:', err);
+      }
+    });
+
+    // Save position on close (used as fallback next time)
+    newWindow.addEventListener('beforeunload', () => {
+      try {
+        const { screenLeft, screenTop, outerWidth, outerHeight } = newWindow;
+        const position = `left=${screenLeft},top=${screenTop},width=${outerWidth},height=${outerHeight}`;
+        localStorage.setItem(PROJECTOR_POSITION_KEY, position);
+      } catch (err) {
+        console.warn('[Projector] Failed to save position:', err);
+      }
+    });
 
     // Send INIT state after a short delay
     setTimeout(() => {
@@ -177,6 +210,13 @@ export function ProjectionControl() {
 
   const handleSetupComplete = useCallback(() => {
     setShowSetup(false);
+  }, []);
+
+  const resetProjectorPosition = useCallback(() => {
+    localStorage.removeItem(PROJECTOR_POSITION_KEY);
+    toast.success('Projector position reset', {
+      description: 'Next time you open the projector, default position will be used.',
+    });
   }, []);
 
   const statusConfig = {
