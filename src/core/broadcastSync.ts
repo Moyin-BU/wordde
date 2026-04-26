@@ -80,6 +80,7 @@ export type BroadcastMessage =
   | { type: 'RELOAD_ASSETS' }
   | { type: 'HEARTBEAT'; timestamp: number }
   | { type: 'PROJECTOR_READY' }
+  | { type: 'REQUEST_FULLSCREEN' }
   | { type: 'SYNC'; payload: Passage | null; isBlanked: boolean; blankSettings?: BlankSettings };
 
 let channel: BroadcastChannel | null = null;
