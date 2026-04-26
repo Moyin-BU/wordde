@@ -61,7 +61,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
   const verseContent = passage.verses.map(v => v.text).join(' ');
   const reference = passage.displayReference;
   const translationCode = passage.reference.translation;
-  const translationName = TRANSLATION_NAMES[translationCode] || translationCode;
+  const translationName = getTranslationDisplayName(translationCode);
 
   useLayoutEffect(() => {
     const fit = () => {
