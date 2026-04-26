@@ -175,17 +175,6 @@ export function ProjectionControl() {
     projectorWindowRef.current = newWindow;
     autoPlacedRef.current = usedExternalScreen;
 
-    // Auto-fullscreen on load
-    newWindow.addEventListener('load', () => {
-      try {
-        newWindow.document.documentElement.requestFullscreen?.().catch((err) => {
-          console.warn('[Projector] Auto-fullscreen blocked:', err);
-        });
-      } catch (err) {
-        console.warn('[Projector] requestFullscreen threw:', err);
-      }
-    });
-
     // Save position on close (used as fallback next time)
     newWindow.addEventListener('beforeunload', () => {
       try {
@@ -197,15 +186,39 @@ export function ProjectionControl() {
       }
     });
 
-    // Send INIT state after a short delay
-    setTimeout(() => {
+    // Dedicated one-shot listener for PROJECTOR_READY (avoids stale-closure race
+    // in the persistent useEffect listener).
+    const readyChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      readyChannel.close();
+    };
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      if (projectorWindowRef.current === newWindow && !newWindow.closed) {
+        toast.error('Projector setup timed out', {
+          description: 'The projection window did not respond. Try closing and reopening it.',
+        });
+      }
+    }, 10000);
+
+    readyChannel.onmessage = (event) => {
+      if (event.data?.type !== 'PROJECTOR_READY') return;
+      cleanup();
+      setStatus('active');
+
+      // Request fullscreen via broadcast (called from inside the projector
+      // context, after React has mounted — more reliable than cross-window calls).
+      getChannel().postMessage({ type: 'REQUEST_FULLSCREEN' });
+
+      // Push current state so the projector renders immediately.
       const state = useStateManager.getState();
       broadcastSync(
         state.committedPassage,
         state.isScreenBlanked,
         state.isScreenBlanked ? loadBlankSettings() : undefined
       );
-    }, 500);
+    };
   }, [status]);
 
   const handleSetupComplete = useCallback(() => {
