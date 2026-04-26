@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings } from '@/core/broadcastSync';
+import { onBroadcastMessage, broadcastStateResponse, broadcastSync, loadBlankSettings, getChannel, BROADCAST_CHANNEL_NAME } from '@/core/broadcastSync';
 import { useStateManager } from '@/core/stateManager';
 import { Monitor, ExternalLink, Wifi, WifiOff, MonitorUp, Maximize, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
