@@ -4,6 +4,11 @@ import type { BlankSettings, SessionScreen } from '@/core/broadcastSync';
 import type { Passage } from '@/core/types';
 import { loadAllAssets } from '@/core/assetStorage';
 
+const TRANSLATION_NAMES: Record<string, string> = {
+  KJV: 'King James Version (KJV)',
+  NIV: 'New International Version (NIV)',
+};
+
 function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetUrls: Record<string, string> }) {
   const session = settings.sessionScreens.find(s => s.id === settings.activeSessionId);
   const logoSrc = assetUrls.logo || settings.logoUrl;
@@ -59,6 +64,8 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
 
   const verseContent = passage.verses.map(v => v.text).join(' ');
   const reference = passage.displayReference;
+  const translationCode = passage.reference.translation;
+  const translationName = TRANSLATION_NAMES[translationCode] || translationCode;
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -104,7 +111,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
   return (
     <div
       ref={containerRef}
-      className="overflow-hidden"
+      className="overflow-hidden relative"
       style={{ height: 'calc(100vh - 0px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}
     >
       <div
@@ -130,6 +137,14 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
           {reference}
         </p>
       </div>
+      {/* Translation label — rendered OUTSIDE the auto-fit container so it never
+          influences font scaling or height calculations. Fixed to viewport bottom. */}
+      <p
+        className="absolute left-0 right-0 bottom-6 text-center font-sans font-light tracking-wider uppercase text-projection-foreground/40 pointer-events-none"
+        style={{ fontSize: 'clamp(0.625rem, 1.1vh, 0.875rem)' }}
+      >
+        {translationName}
+      </p>
     </div>
   );
 }
