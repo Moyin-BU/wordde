@@ -400,7 +400,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
         currentSlideIndex: currentSlideIndex + 1,
       });
     }
+    get().persistRecoveryState();
   },
+
 
   slidePrevious: () => {
     const { currentSlideIndex, projectionQueue, currentTranslation } = get();
