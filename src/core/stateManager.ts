@@ -444,14 +444,75 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const p = slideToPassage(slide, currentTranslation);
       set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
       broadcastCommit(p);
-      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
+      try {
+        persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
+      } catch (error) {
+        console.warn('[undoProjection] Failed to persist projection state:', error);
+      }
       get().addToRecent(slide.reference);
+      get().persistRecoveryState();
     }
+  },
+
+  persistRecoveryState: () => {
+    const {
+      projectionQueue,
+      currentSlideIndex,
+      liveSlideIndex,
+      committedPassage,
+      isScreenBlanked,
+      currentTranslation,
+      projectionLocked,
+      historyStack,
+    } = get();
+    if (projectionQueue.length === 0) return;
+    saveRecoverySnapshot(
+      buildRecoverySnapshot({
+        projectionQueue,
+        currentSlideIndex,
+        liveSlideIndex,
+        committedPassage,
+        isScreenBlanked,
+        currentTranslation,
+        projectionLocked,
+        historyStack,
+      }),
+    );
+  },
+
+  restoreProjectionSession: () => {
+    const snapshot = loadRecoverySnapshot();
+    if (!snapshot) return false;
+
+    // Restore ONLY the active projection/navigation session. No broadcast is
+    // performed here: the Projection Window keeps its own last-committed
+    // passage, so restoring must never re-project or promote a preview.
+    set({
+      projectionQueue: snapshot.queue,
+      currentSlideIndex: snapshot.currentSlideIndex,
+      liveSlideIndex: snapshot.liveSlideIndex,
+      committedPassage: snapshot.committedPassage,
+      isScreenBlanked: snapshot.isScreenBlanked,
+      currentTranslation: snapshot.currentTranslation,
+      projectionLocked: snapshot.projectionLocked,
+      historyStack: snapshot.historyStack,
+    });
+    BibleRepository.setCurrentTranslation(snapshot.currentTranslation);
+    console.log('[restoreProjectionSession] Recovered projection session:', {
+      queue: snapshot.queue.length,
+      currentSlideIndex: snapshot.currentSlideIndex,
+      liveSlideIndex: snapshot.liveSlideIndex,
+      translation: snapshot.currentTranslation,
+      blanked: snapshot.isScreenBlanked,
+    });
+    return true;
   },
 
   toggleProjectionLock: () => {
     set({ projectionLocked: !get().projectionLocked });
+    get().persistRecoveryState();
   },
+
 
   projectNow: () => {
     const { projectionQueue, currentSlideIndex } = get();
