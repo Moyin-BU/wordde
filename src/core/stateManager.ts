@@ -6,6 +6,8 @@ import { create } from 'zustand';
 import type { AppState, Passage, Slide, SearchResult } from './types';
 import { BibleRepository } from './bibleRepository';
 import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings, persistProjectionState } from './broadcastSync';
+import { buildRecoverySnapshot, saveRecoverySnapshot, loadRecoverySnapshot } from './projectionRecovery';
+
 
 /**
  * Determines if two slides belong to the same reference group (same book + chapter).
