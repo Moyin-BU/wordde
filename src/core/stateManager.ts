@@ -153,10 +153,14 @@ function projectSlide(
     committedPassage: passage,
     isScreenBlanked: false,
   });
-  localStorage.setItem('currentProjection', JSON.stringify(passage));
-  console.log('Saved projection:', passage);
+  // Persistence must never break a live projection: broadcast first, then persist.
   broadcastCommit(passage);
-  persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
+  try {
+    localStorage.setItem('currentProjection', JSON.stringify(passage));
+    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
+  } catch (error) {
+    console.warn('[projectSlide] Failed to persist projection state:', error);
+  }
   get().addToRecent(slide.reference);
 
   // Pre-load next slide
@@ -180,7 +184,11 @@ function projectSlide(
       }
     }
   }
+
+  // Recovery snapshot last — after authoritative state + broadcast.
+  get().persistRecoveryState();
 }
+
 
 export const useStateManager = create<StateManager>((set, get) => ({
   // App state
