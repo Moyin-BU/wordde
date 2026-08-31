@@ -322,7 +322,11 @@ export const useStateManager = create<StateManager>((set, get) => ({
         );
       }
     }
+    // Translation is part of the recovery contract, so snapshot it even when
+    // nothing is live (projectSlide already snapshots the re-projection case).
+    get().persistRecoveryState();
   },
+
 
   setLoading: (loading) => set({ isLoading: loading }),
   setBibleLoaded: (loaded) => set({ isBibleLoaded: loaded }),
