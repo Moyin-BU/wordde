@@ -427,7 +427,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
         currentSlideIndex: 0,
       });
     }
+    get().persistRecoveryState();
   },
+
 
   undoProjection: () => {
     const { historyStack, currentTranslation } = get();
