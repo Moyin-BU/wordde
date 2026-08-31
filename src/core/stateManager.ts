@@ -595,13 +595,22 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (isScreenBlanked) {
       set({ isScreenBlanked: false });
       broadcastUnblank();
-      persistProjectionState({ passage: committedPassage, isBlanked: false, timestamp: Date.now() });
+      try {
+        persistProjectionState({ passage: committedPassage, isBlanked: false, timestamp: Date.now() });
+      } catch (error) {
+        console.warn('[blankScreen] Failed to persist projection state:', error);
+      }
     } else {
       set({ isScreenBlanked: true });
       const settings = loadBlankSettings();
       broadcastBlank(settings);
-      persistProjectionState({ passage: committedPassage, isBlanked: true, blankSettings: settings, timestamp: Date.now() });
+      try {
+        persistProjectionState({ passage: committedPassage, isBlanked: true, blankSettings: settings, timestamp: Date.now() });
+      } catch (error) {
+        console.warn('[blankScreen] Failed to persist projection state:', error);
+      }
     }
+    get().persistRecoveryState();
   },
 
   loadChapterAsQueue: () => {
@@ -632,9 +641,15 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (chapterPassage) {
       set({ committedPassage: chapterPassage, isScreenBlanked: false });
       broadcastCommit(chapterPassage);
-      persistProjectionState({ passage: chapterPassage, isBlanked: false, timestamp: Date.now() });
+      try {
+        persistProjectionState({ passage: chapterPassage, isBlanked: false, timestamp: Date.now() });
+      } catch (error) {
+        console.warn('[loadChapterAsQueue] Failed to persist projection state:', error);
+      }
     }
+    get().persistRecoveryState();
   },
+
 
   // === Legacy navigation methods ===
   goToNextVerse: () => {
