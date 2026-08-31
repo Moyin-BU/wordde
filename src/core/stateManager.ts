@@ -54,6 +54,13 @@ interface StateManager extends AppState {
   historyStack: Slide[];
   undoProjection: () => void;
 
+  // Projection recovery (operator reload/crash resilience)
+  /** Persist the small recovery snapshot of the active projection session. */
+  persistRecoveryState: () => void;
+  /** Restore the active projection session after an operator reload. Returns true if restored. */
+  restoreProjectionSession: () => boolean;
+
+
   // Projection lock
   projectionLocked: boolean;
   toggleProjectionLock: () => void;
