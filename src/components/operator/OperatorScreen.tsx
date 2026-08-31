@@ -81,6 +81,9 @@ export function OperatorScreen() {
         .then(() => {
           setBibleLoaded(true);
           setLoading(false);
+          // Bible data is available — only now can the active projection
+          // session be reconstructed after an operator reload/crash.
+          useStateManager.getState().restoreProjectionSession();
         })
         .catch((error) => {
           console.error('Failed to load Bible:', error);
@@ -88,6 +91,7 @@ export function OperatorScreen() {
         });
     }
   }, [isBibleLoaded, setBibleLoaded, setLoading]);
+
 
   if (isLoading) {
     return (
