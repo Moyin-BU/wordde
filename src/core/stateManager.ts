@@ -6,8 +6,6 @@ import { create } from 'zustand';
 import type { AppState, Passage, Slide, SearchResult } from './types';
 import { BibleRepository } from './bibleRepository';
 import { broadcastCommit, broadcastBlank, broadcastUnblank, loadBlankSettings, persistProjectionState } from './broadcastSync';
-import { buildRecoverySnapshot, saveRecoverySnapshot, loadRecoverySnapshot } from './projectionRecovery';
-
 
 /**
  * Determines if two slides belong to the same reference group (same book + chapter).
@@ -53,13 +51,6 @@ interface StateManager extends AppState {
   // Projection history (reference-level undo)
   historyStack: Slide[];
   undoProjection: () => void;
-
-  // Projection recovery (operator reload/crash resilience)
-  /** Persist the small recovery snapshot of the active projection session. */
-  persistRecoveryState: () => void;
-  /** Restore the active projection session after an operator reload. Returns true if restored. */
-  restoreProjectionSession: () => boolean;
-
 
   // Projection lock
   projectionLocked: boolean;
@@ -153,14 +144,10 @@ function projectSlide(
     committedPassage: passage,
     isScreenBlanked: false,
   });
-  // Persistence must never break a live projection: broadcast first, then persist.
+  localStorage.setItem('currentProjection', JSON.stringify(passage));
+  console.log('Saved projection:', passage);
   broadcastCommit(passage);
-  try {
-    localStorage.setItem('currentProjection', JSON.stringify(passage));
-    persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
-  } catch (error) {
-    console.warn('[projectSlide] Failed to persist projection state:', error);
-  }
+  persistProjectionState({ passage, isBlanked: false, timestamp: Date.now() });
   get().addToRecent(slide.reference);
 
   // Pre-load next slide
@@ -184,11 +171,7 @@ function projectSlide(
       }
     }
   }
-
-  // Recovery snapshot last — after authoritative state + broadcast.
-  get().persistRecoveryState();
 }
-
 
 export const useStateManager = create<StateManager>((set, get) => ({
   // App state
@@ -322,11 +305,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         );
       }
     }
-    // Translation is part of the recovery contract, so snapshot it even when
-    // nothing is live (projectSlide already snapshots the re-projection case).
-    get().persistRecoveryState();
   },
-
 
   setLoading: (loading) => set({ isLoading: loading }),
   setBibleLoaded: (loaded) => set({ isBibleLoaded: loaded }),
@@ -404,9 +383,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         currentSlideIndex: currentSlideIndex + 1,
       });
     }
-    get().persistRecoveryState();
   },
-
 
   slidePrevious: () => {
     const { currentSlideIndex, projectionQueue, currentTranslation } = get();
@@ -431,9 +408,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
         currentSlideIndex: 0,
       });
     }
-    get().persistRecoveryState();
   },
-
 
   undoProjection: () => {
     const { historyStack, currentTranslation } = get();
@@ -450,75 +425,14 @@ export const useStateManager = create<StateManager>((set, get) => ({
       const p = slideToPassage(slide, currentTranslation);
       set({ liveSlideIndex: 0, committedPassage: p, isScreenBlanked: false });
       broadcastCommit(p);
-      try {
-        persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
-      } catch (error) {
-        console.warn('[undoProjection] Failed to persist projection state:', error);
-      }
+      persistProjectionState({ passage: p, isBlanked: false, timestamp: Date.now() });
       get().addToRecent(slide.reference);
-      get().persistRecoveryState();
     }
-  },
-
-  persistRecoveryState: () => {
-    const {
-      projectionQueue,
-      currentSlideIndex,
-      liveSlideIndex,
-      committedPassage,
-      isScreenBlanked,
-      currentTranslation,
-      projectionLocked,
-      historyStack,
-    } = get();
-    if (projectionQueue.length === 0) return;
-    saveRecoverySnapshot(
-      buildRecoverySnapshot({
-        projectionQueue,
-        currentSlideIndex,
-        liveSlideIndex,
-        committedPassage,
-        isScreenBlanked,
-        currentTranslation,
-        projectionLocked,
-        historyStack,
-      }),
-    );
-  },
-
-  restoreProjectionSession: () => {
-    const snapshot = loadRecoverySnapshot();
-    if (!snapshot) return false;
-
-    // Restore ONLY the active projection/navigation session. No broadcast is
-    // performed here: the Projection Window keeps its own last-committed
-    // passage, so restoring must never re-project or promote a preview.
-    set({
-      projectionQueue: snapshot.queue,
-      currentSlideIndex: snapshot.currentSlideIndex,
-      liveSlideIndex: snapshot.liveSlideIndex,
-      committedPassage: snapshot.committedPassage,
-      isScreenBlanked: snapshot.isScreenBlanked,
-      currentTranslation: snapshot.currentTranslation,
-      projectionLocked: snapshot.projectionLocked,
-      historyStack: snapshot.historyStack,
-    });
-    BibleRepository.setCurrentTranslation(snapshot.currentTranslation);
-    console.log('[restoreProjectionSession] Recovered projection session:', {
-      queue: snapshot.queue.length,
-      currentSlideIndex: snapshot.currentSlideIndex,
-      liveSlideIndex: snapshot.liveSlideIndex,
-      translation: snapshot.currentTranslation,
-      blanked: snapshot.isScreenBlanked,
-    });
-    return true;
   },
 
   toggleProjectionLock: () => {
     set({ projectionLocked: !get().projectionLocked });
-    get().persistRecoveryState();
   },
-
 
   projectNow: () => {
     const { projectionQueue, currentSlideIndex } = get();
@@ -599,22 +513,13 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (isScreenBlanked) {
       set({ isScreenBlanked: false });
       broadcastUnblank();
-      try {
-        persistProjectionState({ passage: committedPassage, isBlanked: false, timestamp: Date.now() });
-      } catch (error) {
-        console.warn('[blankScreen] Failed to persist projection state:', error);
-      }
+      persistProjectionState({ passage: committedPassage, isBlanked: false, timestamp: Date.now() });
     } else {
       set({ isScreenBlanked: true });
       const settings = loadBlankSettings();
       broadcastBlank(settings);
-      try {
-        persistProjectionState({ passage: committedPassage, isBlanked: true, blankSettings: settings, timestamp: Date.now() });
-      } catch (error) {
-        console.warn('[blankScreen] Failed to persist projection state:', error);
-      }
+      persistProjectionState({ passage: committedPassage, isBlanked: true, blankSettings: settings, timestamp: Date.now() });
     }
-    get().persistRecoveryState();
   },
 
   loadChapterAsQueue: () => {
@@ -645,15 +550,9 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (chapterPassage) {
       set({ committedPassage: chapterPassage, isScreenBlanked: false });
       broadcastCommit(chapterPassage);
-      try {
-        persistProjectionState({ passage: chapterPassage, isBlanked: false, timestamp: Date.now() });
-      } catch (error) {
-        console.warn('[loadChapterAsQueue] Failed to persist projection state:', error);
-      }
+      persistProjectionState({ passage: chapterPassage, isBlanked: false, timestamp: Date.now() });
     }
-    get().persistRecoveryState();
   },
-
 
   // === Legacy navigation methods ===
   goToNextVerse: () => {
