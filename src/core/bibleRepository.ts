@@ -362,8 +362,8 @@ class BibleRepositoryClass {
     return [...this.bookNames];
   }
 
-  getChapters(bookName: string): string[] {
-    const book = this.getBook(bookName);
+  getChapters(bookName: string, translation?: string): string[] {
+    const book = this.getBook(bookName, translation);
     if (!book) return [];
     return book.chapters.map(c => c.chapter);
   }
@@ -375,74 +375,129 @@ class BibleRepositoryClass {
     return chapterData?.verses || [];
   }
 
-  getVerseCount(bookName: string, chapter: string): number {
-    return this.getVerses(bookName, chapter).length;
+  getVerseCount(bookName: string, chapter: string, translation?: string): number {
+    return this.getVerses(bookName, chapter, translation).length;
   }
 
-  getChapterCount(bookName: string): number {
-    const book = this.getBook(bookName);
+  getChapterCount(bookName: string, translation?: string): number {
+    const book = this.getBook(bookName, translation);
     if (!book) return 0;
     return book.chapters.length;
   }
 
-  getNextVerse(bookName: string, chapter: string, verse: string): { book: string; chapter: string; verse: string } | null {
-    const book = this.getBook(bookName);
+  /**
+   * Navigation model (P0 correctness):
+   * The normalized `Chapter.verses` array is the canonical ordered sequence.
+   * Navigation resolves the CURRENT verse's index in that array and steps by
+   * array position. Verse keys are never derived arithmetically, so lettered
+   * ("3a") and non-contiguous (1, 2, 4) keys navigate exactly as stored.
+   */
+  getNextVerse(
+    bookName: string,
+    chapter: string,
+    verse: string,
+    translation?: string,
+  ): { book: string; chapter: string; verse: string } | null {
+    const book = this.getBook(bookName, translation);
     if (!book) return null;
 
-    const verses = this.getVerses(bookName, chapter);
-    const verseNum = parseInt(verse, 10);
-
-    if (verseNum < verses.length) {
-      return { book: book.book, chapter, verse: String(verseNum + 1) };
+    const chapterIndex = book.chapters.findIndex(c => c.chapter === chapter);
+    if (chapterIndex === -1) {
+      console.warn(`[BibleRepository] getNextVerse: chapter ${bookName} ${chapter} not found.`);
+      return null;
     }
 
-    const chapterNum = parseInt(chapter, 10);
-    const nextChapter = String(chapterNum + 1);
-    const nextChapterVerses = this.getVerses(bookName, nextChapter);
-
-    if (nextChapterVerses.length > 0) {
-      return { book: book.book, chapter: nextChapter, verse: '1' };
+    const verses = book.chapters[chapterIndex].verses;
+    const verseIndex = verses.findIndex(v => v.verse === verse);
+    if (verseIndex === -1) {
+      // Fail safe: never guess a nearby verse.
+      console.warn(
+        `[BibleRepository] getNextVerse: verse "${verse}" not found in ${bookName} ${chapter}.`,
+      );
+      return null;
     }
 
+    // Next element in this chapter.
+    if (verseIndex < verses.length - 1) {
+      return { book: book.book, chapter, verse: verses[verseIndex + 1].verse };
+    }
+
+    // Chapter boundary: first verse of the next chapter, by array order.
+    const nextChapter = book.chapters[chapterIndex + 1];
+    if (nextChapter && nextChapter.verses.length > 0) {
+      return { book: book.book, chapter: nextChapter.chapter, verse: nextChapter.verses[0].verse };
+    }
+
+    // Book boundary: first verse of the first chapter of the next book.
     const bookIndex = this.bookNames.findIndex(b => b.toLowerCase() === book.book.toLowerCase());
     if (bookIndex >= 0 && bookIndex < this.bookNames.length - 1) {
-      const nextBook = this.bookNames[bookIndex + 1];
-      const nextBookFirstChapter = this.getChapters(nextBook)[0];
-      if (nextBookFirstChapter) {
-        return { book: nextBook, chapter: nextBookFirstChapter, verse: '1' };
+      const nextBook = this.getBook(this.bookNames[bookIndex + 1], translation);
+      const firstChapter = nextBook?.chapters.find(c => c.verses.length > 0);
+      if (nextBook && firstChapter) {
+        return {
+          book: nextBook.book,
+          chapter: firstChapter.chapter,
+          verse: firstChapter.verses[0].verse,
+        };
       }
     }
 
     return null;
   }
 
-  getPreviousVerse(bookName: string, chapter: string, verse: string): { book: string; chapter: string; verse: string } | null {
-    const book = this.getBook(bookName);
+  getPreviousVerse(
+    bookName: string,
+    chapter: string,
+    verse: string,
+    translation?: string,
+  ): { book: string; chapter: string; verse: string } | null {
+    const book = this.getBook(bookName, translation);
     if (!book) return null;
 
-    const verseNum = parseInt(verse, 10);
-
-    if (verseNum > 1) {
-      return { book: book.book, chapter, verse: String(verseNum - 1) };
+    const chapterIndex = book.chapters.findIndex(c => c.chapter === chapter);
+    if (chapterIndex === -1) {
+      console.warn(`[BibleRepository] getPreviousVerse: chapter ${bookName} ${chapter} not found.`);
+      return null;
     }
 
-    const chapterNum = parseInt(chapter, 10);
-    if (chapterNum > 1) {
-      const prevChapter = String(chapterNum - 1);
-      const prevChapterVerses = this.getVerses(bookName, prevChapter);
-      if (prevChapterVerses.length > 0) {
-        return { book: book.book, chapter: prevChapter, verse: String(prevChapterVerses.length) };
-      }
+    const verses = book.chapters[chapterIndex].verses;
+    const verseIndex = verses.findIndex(v => v.verse === verse);
+    if (verseIndex === -1) {
+      console.warn(
+        `[BibleRepository] getPreviousVerse: verse "${verse}" not found in ${bookName} ${chapter}.`,
+      );
+      return null;
     }
 
+    if (verseIndex > 0) {
+      return { book: book.book, chapter, verse: verses[verseIndex - 1].verse };
+    }
+
+    // Chapter boundary: final verse of the previous chapter, by array order.
+    const prevChapter = book.chapters[chapterIndex - 1];
+    if (prevChapter && prevChapter.verses.length > 0) {
+      return {
+        book: book.book,
+        chapter: prevChapter.chapter,
+        verse: prevChapter.verses[prevChapter.verses.length - 1].verse,
+      };
+    }
+
+    // Book boundary: final verse of the last chapter of the previous book.
     const bookIndex = this.bookNames.findIndex(b => b.toLowerCase() === book.book.toLowerCase());
     if (bookIndex > 0) {
-      const prevBook = this.bookNames[bookIndex - 1];
-      const prevBookChapters = this.getChapters(prevBook);
-      const lastChapter = prevBookChapters[prevBookChapters.length - 1];
-      if (lastChapter) {
-        const lastChapterVerses = this.getVerses(prevBook, lastChapter);
-        return { book: prevBook, chapter: lastChapter, verse: String(lastChapterVerses.length) };
+      const prevBook = this.getBook(this.bookNames[bookIndex - 1], translation);
+      if (prevBook) {
+        for (let i = prevBook.chapters.length - 1; i >= 0; i--) {
+          const ch = prevBook.chapters[i];
+          if (ch.verses.length > 0) {
+            return {
+              book: prevBook.book,
+              chapter: ch.chapter,
+              verse: ch.verses[ch.verses.length - 1].verse,
+            };
+          }
+        }
       }
     }
 
