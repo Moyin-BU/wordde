@@ -165,7 +165,7 @@ function projectSlide(
 
   // Pre-load next slide
   if (currentSlideIndex >= get().projectionQueue.length - 1) {
-    const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+    const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse, currentTranslation);
     if (nextPos) {
       const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
       if (verse) {
@@ -388,7 +388,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     } else {
       const lastSlide = projectionQueue[projectionQueue.length - 1];
       if (!lastSlide) return;
-      const nextPos = BibleRepository.getNextVerse(lastSlide.book, lastSlide.chapter, lastSlide.verse);
+      const nextPos = BibleRepository.getNextVerse(lastSlide.book, lastSlide.chapter, lastSlide.verse, currentTranslation);
       if (!nextPos) return;
       const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
       if (!verse) return;
@@ -415,7 +415,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     } else {
       const firstSlide = projectionQueue[0];
       if (!firstSlide) return;
-      const prevPos = BibleRepository.getPreviousVerse(firstSlide.book, firstSlide.chapter, firstSlide.verse);
+      const prevPos = BibleRepository.getPreviousVerse(firstSlide.book, firstSlide.chapter, firstSlide.verse, currentTranslation);
       if (!prevPos) return;
       const verse = BibleRepository.getVerse(prevPos.book, prevPos.chapter, prevPos.verse, currentTranslation);
       if (!verse) return;
@@ -535,7 +535,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     // When locked, only update preview — do NOT broadcast
     if (projectionLocked) {
       if (currentSlideIndex >= projectionQueue.length - 1) {
-        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse, currentTranslation);
         if (nextPos) {
           const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
           if (verse) {
@@ -569,7 +569,7 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (projectionLocked) {
       // Same pre-load logic as commitCurrentSlide
       if (currentSlideIndex >= projectionQueue.length - 1) {
-        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse);
+        const nextPos = BibleRepository.getNextVerse(slide.book, slide.chapter, slide.verse, currentTranslation);
         if (nextPos) {
           const verse = BibleRepository.getVerse(nextPos.book, nextPos.chapter, nextPos.verse, currentTranslation);
           if (verse) {
