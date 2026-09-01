@@ -631,8 +631,8 @@ export const useStateManager = create<StateManager>((set, get) => ({
     const chapterPassage = BibleRepository.getPassage({
       book,
       chapter,
-      verseStart: '1',
-      verseEnd: String(verses.length),
+      verseStart: verses[0].verse,
+      verseEnd: verses[verses.length - 1].verse,
       translation: currentTranslation,
     });
 
@@ -669,12 +669,14 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (!committedPassage) return;
     const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const { book, chapter } = committedPassage.reference;
-    const chapterNum = parseInt(chapter, 10);
-    const nextChapter = String(chapterNum + 1);
-    const nextChapterVerses = BibleRepository.getVerses(book, nextChapter, currentTranslation);
-    if (nextChapterVerses.length > 0) {
+    // Chapter order comes from the normalized chapters array, not arithmetic.
+    const chapterList = BibleRepository.getChapters(book, currentTranslation);
+    const chapterIdx = chapterList.indexOf(chapter);
+    const nextChapter = chapterIdx >= 0 ? chapterList[chapterIdx + 1] : undefined;
+    const nextChapterVerses = nextChapter ? BibleRepository.getVerses(book, nextChapter, currentTranslation) : [];
+    if (nextChapter && nextChapterVerses.length > 0) {
       const slides = chapterToSlides(book, nextChapter, currentTranslation);
-      const passage = BibleRepository.getPassage({ book, chapter: nextChapter, verseStart: '1', translation: currentTranslation });
+      const passage = BibleRepository.getPassage({ book, chapter: nextChapter, verseStart: nextChapterVerses[0].verse, translation: currentTranslation });
       if (passage) {
         set({ projectionQueue: slides, currentSlideIndex: 0 });
         get()._commitWithOldSlide(oldLiveSlide);
@@ -701,11 +703,13 @@ export const useStateManager = create<StateManager>((set, get) => ({
     if (!committedPassage) return;
     const oldLiveSlide = liveSlideIndex !== null ? projectionQueue[liveSlideIndex] ?? null : null;
     const { book, chapter } = committedPassage.reference;
-    const chapterNum = parseInt(chapter, 10);
-    if (chapterNum > 1) {
-      const prevChapter = String(chapterNum - 1);
+    const chapterList = BibleRepository.getChapters(book, currentTranslation);
+    const chapterIdx = chapterList.indexOf(chapter);
+    const prevChapter = chapterIdx > 0 ? chapterList[chapterIdx - 1] : undefined;
+    const prevChapterVerses = prevChapter ? BibleRepository.getVerses(book, prevChapter, currentTranslation) : [];
+    if (prevChapter && prevChapterVerses.length > 0) {
       const slides = chapterToSlides(book, prevChapter, currentTranslation);
-      const passage = BibleRepository.getPassage({ book, chapter: prevChapter, verseStart: '1', translation: currentTranslation });
+      const passage = BibleRepository.getPassage({ book, chapter: prevChapter, verseStart: prevChapterVerses[0].verse, translation: currentTranslation });
       if (passage) {
         set({ projectionQueue: slides, currentSlideIndex: 0 });
         get()._commitWithOldSlide(oldLiveSlide);
