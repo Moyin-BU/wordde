@@ -2,72 +2,193 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Bible Projection App Design System
-   Professional, distraction-free aesthetic for church environments
-   Dark operator interface, high contrast, keyboard-first focus
-*/
+/* ============================================================
+   Bible Projection — Design System (Phase 1 foundation)
+   Minimal, modern glassmorphism on a near-black foundation.
+   Typography: Poppins, bundled locally for offline-first use.
+   ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+/* --- Local Poppins (no runtime network dependency) --- */
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/poppins-300-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/poppins-300-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/poppins-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/poppins-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/poppins-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/poppins-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/poppins-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/poppins-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/poppins-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/poppins-700-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 @layer base {
   :root {
-    /* Core surfaces - Dark operator interface */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 96%;
-    
-    /* Card/Panel surfaces */
-    --card: 222 47% 14%;
-    --card-foreground: 210 40% 96%;
-    
-    --popover: 222 47% 16%;
-    --popover-foreground: 210 40% 96%;
-    
-    /* Primary - Warm amber accent for focus/selection */
-    --primary: 38 92% 50%;
-    --primary-foreground: 222 47% 11%;
-    
-    /* Secondary - Slate blue for subtle accents */
-    --secondary: 215 25% 22%;
-    --secondary-foreground: 210 40% 90%;
-    
-    /* Muted - For inactive/background elements */
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 55%;
-    
-    /* Accent - Teal for success/confirmation */
-    --accent: 173 58% 39%;
-    --accent-foreground: 210 40% 98%;
-    
-    /* Destructive */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    
-    /* Borders and inputs */
-    --border: 217 33% 25%;
-    --input: 217 33% 20%;
-    --ring: 38 92% 50%;
-    
-    --radius: 0.5rem;
-    
-    /* Scripture-specific colors */
-    --scripture-text: 210 40% 98%;
-    --scripture-reference: 38 92% 60%;
-    --preview-border: 173 58% 39%;
-    --committed-glow: 38 92% 50%;
-    
-    /* Projection screen - Maximum contrast */
-    --projection-bg: 0 0% 0%;
+    /* ---- Source palette (HSL channels) ----
+       black #08090A · bright-sky #01BAEF · emerald #06D6A0
+       turf-green #337357 · lavender-blush #FFEAEE */
+    --palette-black: 210 11% 4%;
+    --palette-sky: 192 99% 47%;
+    --palette-emerald: 163 94% 43%;
+    --palette-turf: 156 38% 33%;
+    --palette-blush: 348 100% 96%;
+
+    /* ---- Semantic surfaces ---- */
+    --background: 210 11% 4%;
+    --background-elevated: 210 10% 7%;
+    --foreground: 348 30% 96%;
+
+    /* Glass materials (translucent, used with backdrop blur) */
+    --surface-glass-subtle: 210 12% 10%;
+    --surface-glass: 210 12% 13%;
+    --surface-glass-elevated: 210 12% 16%;
+    --glass-opacity-subtle: 0.35;
+    --glass-opacity-standard: 0.55;
+    --glass-opacity-elevated: 0.82;
+    --glass-highlight: 348 100% 96%;
+
+    /* shadcn surface mapping (components consume these) */
+    --card: 210 12% 8%;
+    --card-foreground: 348 20% 96%;
+    --popover: 210 12% 10%;
+    --popover-foreground: 348 20% 96%;
+
+    /* ---- Accents ---- */
+    --primary: 192 99% 47%;
+    --primary-foreground: 210 11% 4%;
+    --accent-secondary: 156 38% 33%;
+    --secondary: 210 10% 15%;
+    --secondary-foreground: 348 15% 92%;
+    --muted: 210 10% 12%;
+    --muted-foreground: 210 8% 60%;
+    --accent: 163 94% 43%;
+    --accent-foreground: 210 11% 4%;
+    --success: 163 94% 43%;
+    --success-foreground: 210 11% 4%;
+    --destructive: 356 78% 56%;
+    --destructive-foreground: 348 30% 97%;
+
+    /* ---- Text roles ---- */
+    --text-primary: 348 25% 96%;
+    --text-secondary: 210 12% 74%;
+    --text-muted: 210 8% 55%;
+    --text-on-accent: 210 11% 4%;
+
+    /* ---- Borders ---- */
+    --border-subtle: 348 30% 96%;   /* used with low alpha */
+    --border: 210 12% 20%;
+    --border-strong: 210 12% 32%;
+    --input: 210 12% 18%;
+    --ring: 192 99% 47%;
+    --focus: 192 99% 47%;
+
+    /* ---- Radii ---- */
+    --radius-sm: 0.375rem;
+    --radius: 0.625rem;
+    --radius-lg: 0.875rem;
+    --radius-xl: 1.25rem;
+
+    /* ---- Shadow scale ---- */
+    --shadow-subtle: 0 1px 2px hsl(var(--palette-black) / 0.5);
+    --shadow-standard: 0 4px 16px -4px hsl(var(--palette-black) / 0.65);
+    --shadow-elevated: 0 12px 32px -8px hsl(var(--palette-black) / 0.75);
+    --shadow-floating: 0 24px 60px -16px hsl(var(--palette-black) / 0.85);
+
+    /* ---- Lighting (ambient, deliberately faint) ---- */
+    --light-interactive: 0 0 0 1px hsl(var(--palette-sky) / 0.35), 0 0 24px -6px hsl(var(--palette-sky) / 0.28);
+    --light-positive: 0 0 20px -6px hsl(var(--palette-emerald) / 0.3);
+    --light-ambient: 0 0 40px -10px hsl(var(--palette-turf) / 0.22);
+
+    /* ---- Motion ---- */
+    --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
+    --duration-fast: 120ms;
+    --duration-standard: 180ms;
+
+    /* ---- Domain tokens (kept for compatibility) ---- */
+    --scripture-text: 348 25% 97%;
+    --scripture-reference: 192 99% 60%;
+    --preview-border: 163 94% 43%;
+    --committed-glow: 192 99% 47%;
+    --projection-bg: 210 11% 3%;
     --projection-text: 0 0% 100%;
-    
-    /* Sidebar */
-    --sidebar-background: 222 47% 9%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 38 92% 50%;
+
+    /* ---- Sidebar ---- */
+    --sidebar-background: 210 11% 5%;
+    --sidebar-foreground: 348 15% 92%;
+    --sidebar-primary: 192 99% 47%;
+    --sidebar-primary-foreground: 210 11% 4%;
+    --sidebar-accent: 210 10% 12%;
+    --sidebar-accent-foreground: 348 15% 92%;
+    --sidebar-border: 210 12% 18%;
+    --sidebar-ring: 192 99% 47%;
   }
 }
 
@@ -75,47 +196,177 @@
   * {
     @apply border-border;
   }
-  
+
+  html {
+    background-color: hsl(var(--background));
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    /* Restrained ambient lighting establishes depth behind glass surfaces */
+    background-image:
+      radial-gradient(70rem 40rem at 12% -10%, hsl(var(--palette-sky) / 0.07), transparent 65%),
+      radial-gradient(60rem 38rem at 92% 108%, hsl(var(--palette-turf) / 0.09), transparent 62%);
+    background-attachment: fixed;
   }
-  
-  /* Scripture text styling */
+
+  /* Typography hierarchy — Poppins weights used deliberately */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    line-height: 1.2;
+  }
+
+  kbd, code {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: hsl(var(--palette-sky) / 0.28);
+  }
+
+  /* Focus visibility is non-negotiable */
+  :focus-visible {
+    outline: 2px solid hsl(var(--focus));
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ============ GLASS MATERIAL HIERARCHY ============ */
+  .glass-subtle {
+    background-color: hsl(var(--surface-glass-subtle) / var(--glass-opacity-subtle));
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    border: 1px solid hsl(var(--border-subtle) / 0.05);
+    box-shadow: var(--shadow-subtle);
+  }
+
+  .glass {
+    background-color: hsl(var(--surface-glass) / var(--glass-opacity-standard));
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid hsl(var(--border-subtle) / 0.08);
+    box-shadow: var(--shadow-standard), inset 0 1px 0 hsl(var(--glass-highlight) / 0.04);
+  }
+
+  .glass-elevated {
+    background-color: hsl(var(--surface-glass-elevated) / var(--glass-opacity-elevated));
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid hsl(var(--border-subtle) / 0.12);
+    box-shadow: var(--shadow-elevated), inset 0 1px 0 hsl(var(--glass-highlight) / 0.06);
+  }
+
+  .glass-floating {
+    background-color: hsl(var(--surface-glass-elevated) / 0.9);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid hsl(var(--border-subtle) / 0.14);
+    box-shadow: var(--shadow-floating), inset 0 1px 0 hsl(var(--glass-highlight) / 0.07);
+  }
+
+  /* ============ INTERACTION STATES ============ */
+  .interactive {
+    transition: background-color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-standard) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard);
+  }
+  .interactive:hover {
+    background-color: hsl(var(--surface-glass-elevated) / 0.7);
+    border-color: hsl(var(--border-subtle) / 0.14);
+  }
+  .interactive:active {
+    transform: translateY(0.5px) scale(0.997);
+    box-shadow: inset 0 1px 3px hsl(var(--palette-black) / 0.6);
+  }
+  .interactive[aria-selected='true'],
+  .interactive[data-state='on'],
+  .interactive.is-selected {
+    background-color: hsl(var(--palette-sky) / 0.1);
+    border-color: hsl(var(--palette-sky) / 0.32);
+  }
+  .interactive:disabled,
+  .interactive[aria-disabled='true'] {
+    opacity: 0.45;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  /* ============ LIGHTING UTILITIES ============ */
+  .light-interactive { box-shadow: var(--light-interactive); }
+  .light-positive { box-shadow: var(--light-positive); }
+  .light-ambient { box-shadow: var(--light-ambient); }
+
+  /* ============ TEXT ROLES ============ */
+  .text-display {
+    font-weight: 600;
+    letter-spacing: -0.022em;
+  }
+  .text-label {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .text-meta {
+    font-weight: 400;
+    color: hsl(var(--text-muted));
+    letter-spacing: 0.01em;
+  }
+
+  /* Scripture presentation — Poppins, light weight for calm reading */
   .scripture-text {
-    font-family: 'Crimson Pro', Georgia, serif;
-    @apply text-scripture leading-relaxed tracking-wide;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-weight: 300;
+    @apply text-scripture leading-relaxed;
+    letter-spacing: -0.01em;
   }
-  
+
   .scripture-reference {
-    @apply text-reference font-sans font-medium tracking-wider uppercase text-sm;
+    @apply text-reference font-sans tracking-wider uppercase text-sm;
+    font-weight: 500;
   }
-  
-  /* Focus states for keyboard navigation */
-  .keyboard-focus:focus {
+
+  .keyboard-focus:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
-  
-  /* Result item states */
+
+  /* Result item states rebuilt on the glass/lighting language */
   .result-item {
-    @apply transition-all duration-150 ease-out;
+    transition: background-color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-standard) var(--ease-standard);
   }
-  
   .result-item.selected {
-    @apply bg-secondary border-l-4 border-l-primary;
+    background-color: hsl(var(--palette-sky) / 0.1);
+    border-left: 3px solid hsl(var(--primary));
+    box-shadow: var(--light-positive);
   }
-  
   .result-item:hover:not(.selected) {
-    @apply bg-muted/50;
+    background-color: hsl(var(--surface-glass-elevated) / 0.55);
   }
-  
-  /* Preview panel styling */
+
   .preview-panel {
-    @apply border-2 border-preview rounded-lg bg-card/50;
+    background-color: hsl(var(--surface-glass) / var(--glass-opacity-standard));
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid hsl(var(--preview-border) / 0.35);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-standard), var(--light-positive);
   }
-  
-  /* Committed passage glow effect */
+
   .committed-glow {
-    box-shadow: 0 0 30px hsl(var(--committed-glow) / 0.3);
+    box-shadow: 0 0 0 1px hsl(var(--committed-glow) / 0.35), 0 0 28px -10px hsl(var(--committed-glow) / 0.35);
   }
 }
