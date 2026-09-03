@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        scripture: ['Crimson Pro', 'Georgia', 'serif'],
+        sans: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        scripture: ['Poppins', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -42,6 +42,26 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          secondary: "hsl(var(--accent-secondary))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        focus: "hsl(var(--focus))",
+        "border-subtle": "hsl(var(--border-subtle) / 0.08)",
+        "border-strong": "hsl(var(--border-strong))",
+        surface: {
+          glass: "hsl(var(--surface-glass) / var(--glass-opacity-standard))",
+          "glass-subtle": "hsl(var(--surface-glass-subtle) / var(--glass-opacity-subtle))",
+          "glass-elevated": "hsl(var(--surface-glass-elevated) / var(--glass-opacity-elevated))",
+        },
+        "background-elevated": "hsl(var(--background-elevated))",
+        text: {
+          primary: "hsl(var(--text-primary))",
+          secondary: "hsl(var(--text-secondary))",
+          muted: "hsl(var(--text-muted))",
+          "on-accent": "hsl(var(--text-on-accent))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -72,9 +92,28 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
+        sm: "var(--radius-sm)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--radius)",
+        xl: "var(--radius-lg)",
+        "2xl": "var(--radius-xl)",
+        pill: "9999px",
+      },
+      boxShadow: {
+        subtle: "var(--shadow-subtle)",
+        standard: "var(--shadow-standard)",
+        elevated: "var(--shadow-elevated)",
+        floating: "var(--shadow-floating)",
+        "light-interactive": "var(--light-interactive)",
+        "light-positive": "var(--light-positive)",
+        "light-ambient": "var(--light-ambient)",
+      },
+      backdropBlur: {
+        glass: "16px",
+        "glass-elevated": "24px",
+      },
+      transitionTimingFunction: {
+        standard: "var(--ease-standard)",
       },
       keyframes: {
         "accordion-down": {

@@ -108,7 +108,7 @@ export function OperatorScreen() {
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <OnboardingManager />
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm shrink-0">
+      <header className="glass-subtle border-x-0 border-t-0 rounded-none shrink-0">
         <div className="px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export function OperatorScreen() {
               <select
                 value={currentTranslation}
                 onChange={(e) => setTranslation(e.target.value)}
-                className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-medium border-none outline-none cursor-pointer"
+                className="glass-subtle px-2 py-1 rounded-lg text-secondary-foreground text-xs text-label outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-focus"
                 title="Switch translation"
               >
                 {BibleRepository.getAvailableTranslations().map((t) => (
@@ -165,9 +165,9 @@ export function OperatorScreen() {
       {/* Main dual-column layout */}
       <main className="flex-1 flex min-h-0">
         {/* Left Column - Tab-based workflow */}
-        <div className="w-[380px] shrink-0 border-r border-border flex flex-col bg-card/30">
+        <div className="w-[380px] shrink-0 border-r border-border-subtle flex flex-col glass-subtle rounded-none border-y-0 border-l-0">
           {/* Tab bar */}
-          <div className="flex border-b border-border shrink-0">
+          <div className="flex border-b border-border-subtle shrink-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -180,10 +180,10 @@ export function OperatorScreen() {
                     if (tab.id === 'plan') setPlanOpened(true);
                   }}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs font-medium transition-colors border-b-2',
+                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs text-label transition-colors border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
                     isActive
-                      ? 'border-primary text-primary bg-primary/5'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/10'
+                      ? 'border-primary text-primary bg-primary/[0.07]'
+                      : 'border-transparent text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated'
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -240,10 +240,10 @@ export function OperatorScreen() {
           </ScrollArea>
 
           {/* Display Settings dropdown at bottom */}
-          <div className="border-t border-border shrink-0">
+          <div className="border-t border-border-subtle shrink-0">
             <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
-                <button className="w-full flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors">
+                <button className="w-full flex items-center gap-1.5 px-3 py-2.5 text-xs text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
                   <Settings2 className="h-3.5 w-3.5" />
                   <span className="font-medium">Display Settings</span>
                 </button>
@@ -270,7 +270,7 @@ export function OperatorScreen() {
       </main>
 
       {/* Keyboard shortcut hint bar */}
-      <footer className="border-t border-border bg-card/50 shrink-0">
+      <footer className="glass-subtle border-x-0 border-b-0 rounded-none shrink-0">
         <div className="px-4 py-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-2">
             <button
