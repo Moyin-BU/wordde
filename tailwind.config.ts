@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        scripture: ['Crimson Pro', 'Georgia', 'serif'],
+        sans: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        scripture: ['Poppins', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
