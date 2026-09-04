@@ -39,7 +39,7 @@ function BlankOverlay({ settings, assetUrls }: { settings: BlankSettings; assetU
           {logoSrc && (
             <img src={logoSrc} alt="" className="max-w-[200px] max-h-[120px] object-contain opacity-60 mb-4" />
           )}
-          <h2 className="text-projection-foreground text-5xl md:text-7xl font-serif font-medium tracking-wide">
+          <h2 className="text-projection-foreground text-5xl md:text-7xl font-scripture font-light tracking-wide">
             {session?.title || 'Service'}
           </h2>
           {session?.subtitle && (
@@ -106,7 +106,7 @@ function AutoFitVerse({ passage }: { passage: Passage }) {
           className="text-center"
           style={{ maxWidth: '70%' }}
         >
-          <blockquote className="font-serif leading-relaxed tracking-wide text-projection-foreground m-0">
+          <blockquote className="font-scripture font-light leading-relaxed tracking-normal text-projection-foreground m-0">
             {passage.verses.map((verse, index) => (
               <span key={verse.verse}>
                 {passage.verses.length > 1 && (
@@ -242,7 +242,7 @@ const Projection = () => {
         </div>
       )}
       {showHint && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-foreground/10 backdrop-blur-sm text-projection-foreground/60 text-sm font-sans animate-pulse select-none pointer-events-none">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-foreground/[0.07] backdrop-blur-md text-projection-foreground/60 text-sm font-sans animate-pulse select-none pointer-events-none">
           Press F11 for fullscreen projection
         </div>
       )}
