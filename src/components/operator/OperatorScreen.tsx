@@ -125,7 +125,7 @@ export function OperatorScreen() {
               <select
                 value={currentTranslation}
                 onChange={(e) => setTranslation(e.target.value)}
-                className="glass-subtle px-2 py-1 rounded-lg text-secondary-foreground text-xs text-label outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-focus"
+                className="px-2 py-1 rounded-lg bg-background-elevated text-text-secondary text-xs text-label border border-border-subtle outline-none cursor-pointer hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-focus [&>option]:bg-background-elevated"
                 title="Switch translation"
               >
                 {BibleRepository.getAvailableTranslations().map((t) => (
