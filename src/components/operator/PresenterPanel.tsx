@@ -21,17 +21,17 @@ function SlideCard({
 }) {
   const styles = {
     live: {
-      border: 'border-primary/60 bg-primary/5',
+      surface: 'glass-elevated',
       label: 'text-primary',
       refSize: 'text-base',
       textSize: 'text-2xl',
       minH: 'min-h-[180px]',
       padding: 'p-6',
-      glow: 'shadow-[0_0_30px_hsl(var(--primary)/0.15)]',
+      glow: 'shadow-[var(--shadow-elevated),0_0_0_1px_hsl(var(--palette-sky)/0.22)]',
     },
     next: {
-      border: 'border-accent/40 bg-accent/5',
-      label: 'text-accent',
+      surface: 'glass-subtle',
+      label: 'text-accent/90',
       refSize: 'text-sm',
       textSize: 'text-lg',
       minH: 'min-h-[120px]',
@@ -43,14 +43,15 @@ function SlideCard({
   return (
     <div
       className={cn(
-        'rounded-lg border-2 flex flex-col gap-2 transition-all duration-200',
-        styles.border,
+        'rounded-xl flex flex-col gap-2 transition-all duration-200',
+        styles.surface,
         styles.minH,
         styles.padding,
         styles.glow,
         variant === 'live' ? 'flex-[55]' : 'flex-[45]'
       )}
     >
+
       <div className="flex items-center gap-2 shrink-0">
         <Icon className={cn('h-4 w-4', styles.label)} />
         <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.label)}>
