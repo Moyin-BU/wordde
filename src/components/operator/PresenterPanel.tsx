@@ -53,15 +53,15 @@ function SlideCard({
     >
 
       <div className="flex items-center gap-2 shrink-0">
-        <Icon className={cn('h-4 w-4', styles.label)} />
-        <span className={cn('text-xs font-semibold uppercase tracking-wider', styles.label)}>
+        <Icon className={cn('h-3.5 w-3.5', styles.label)} />
+        <span className={cn('text-[10px] text-label uppercase tracking-[0.12em]', styles.label)}>
           {label}
         </span>
       </div>
       <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
         {slide ? (
           <>
-            <p className={cn('scripture-reference text-reference mb-1 shrink-0', styles.refSize)}>
+            <p className={cn('scripture-reference text-reference mb-1.5 shrink-0', styles.refSize)}>
               {slide.reference}
             </p>
             <div className="overflow-y-auto flex-1 min-h-0">
@@ -76,11 +76,12 @@ function SlideCard({
             </div>
           </>
         ) : (
-          <p className="text-muted-foreground/40 text-sm italic">
+          <p className="text-text-muted/60 text-sm">
             {variant === 'live' ? 'No slide projected' : 'No slide selected'}
           </p>
         )}
       </div>
+
     </div>
   );
 }
