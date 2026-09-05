@@ -147,13 +147,13 @@ export function PresenterPanel() {
   if (projectionQueue.length === 0) {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className="p-1 rounded bg-primary/20">
+              <div className="p-1 rounded-md bg-primary/10">
                 <Monitor className="h-3.5 w-3.5 text-primary" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">Presenter</span>
+              <span className="text-xs text-label text-text-secondary">Presenter</span>
             </div>
             <ProjectionStatus />
           </div>
@@ -161,11 +161,11 @@ export function PresenterPanel() {
         <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
           <SlideCard slide={null} label="Live" icon={Monitor} variant="live" />
           <SlideCard slide={null} label="Next" icon={SkipForward} variant="next" />
-          
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="h-full flex flex-col">
