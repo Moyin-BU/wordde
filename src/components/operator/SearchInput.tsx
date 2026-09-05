@@ -130,8 +130,14 @@ export function SearchInput({
   }, [showSuggestions, suggestions, selectedSuggestion, selectSuggestion, onKeyDown]);
 
   return (
-    <div ref={containerRef} className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+    <div ref={containerRef} className="relative group">
+      {/* Search affordance sits inside the glass control, not beside it */}
+      <Search
+        className={cn(
+          'absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none z-10 transition-colors duration-150',
+          value ? 'text-primary/80' : 'text-text-muted group-focus-within:text-primary/80'
+        )}
+      />
       <Input
         ref={inputRef}
         type="text"
@@ -144,44 +150,43 @@ export function SearchInput({
         }}
         placeholder={placeholder}
         className={cn(
-          "h-12 pl-10 pr-10 text-lg",
-          "bg-input border-border",
-          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary",
-          "placeholder:text-muted-foreground/60",
-          "font-sans"
+          'glass interactive h-11 pl-10 pr-10 text-sm rounded-lg',
+          'text-foreground placeholder:text-text-muted/80',
+          'focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-0',
+          'focus-visible:border-primary/40'
         )}
         autoComplete="off"
         spellCheck={false}
       />
-      {value && (
+      {value && !isLoading && (
         <button
           onClick={onClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-text-muted hover:text-foreground hover:bg-surface-glass-elevated/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           tabIndex={-1}
           aria-label="Clear search"
         >
-          <X className="h-5 w-5" />
+          <X className="h-3.5 w-3.5" />
         </button>
       )}
       {isLoading && (
-        <div className="absolute right-10 top-1/2 -translate-y-1/2">
-          <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+          <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
-      {/* Autocomplete dropdown */}
+      {/* Autocomplete dropdown — genuinely floating UI */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-md border border-border bg-popover shadow-lg overflow-hidden">
+        <div className="glass-floating absolute left-0 right-0 top-full mt-2 z-50 rounded-lg overflow-hidden p-1">
           {suggestions.map((suggestion, index) => {
             const Icon = typeIcons[suggestion.type];
+            const isActive = index === selectedSuggestion;
             return (
               <button
                 key={`${suggestion.reference}-${index}`}
+                aria-selected={isActive}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors",
-                  index === selectedSuggestion
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-muted/50 text-foreground"
+                  'interactive w-full flex items-center gap-2.5 px-2.5 py-2 text-sm text-left rounded-md border border-transparent',
+                  isActive ? 'text-foreground' : 'text-text-secondary'
                 )}
                 onMouseDown={(e) => {
                   e.preventDefault(); // Prevent input blur
@@ -190,9 +195,9 @@ export function SearchInput({
                 onMouseEnter={() => setSelectedSuggestion(index)}
                 tabIndex={-1}
               >
-                <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate">{suggestion.display}</span>
-                <span className="ml-auto text-[10px] text-muted-foreground/60 capitalize">
+                <Icon className={cn('h-3.5 w-3.5 shrink-0', isActive ? 'text-primary' : 'text-text-muted')} />
+                <span className="truncate text-label">{suggestion.display}</span>
+                <span className="ml-auto text-[10px] text-text-muted capitalize">
                   {suggestion.type}
                 </span>
               </button>
@@ -203,3 +208,4 @@ export function SearchInput({
     </div>
   );
 }
+
