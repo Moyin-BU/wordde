@@ -28,47 +28,49 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
   }
   
   return (
-    <div className="space-y-1">
-      <div className="text-xs uppercase tracking-wider text-muted-foreground px-2 py-1">
-        Results ({results.length})
+    <div className="glass-subtle rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle/10">
+        <span className="text-[10px] uppercase tracking-wider text-text-muted text-label">Results</span>
+        <span className="text-[10px] text-text-muted tabular-nums">{results.length}</span>
       </div>
-      <div className="space-y-1">
+      <div className="p-1">
         {results.map((result, index) => {
           const Icon = matchTypeIcons[result.matchType];
           const isSelected = index === selectedIndex;
-          
+
           return (
             <button
               key={`${result.passage.displayReference}-${index}`}
               onClick={() => onSelect(index)}
+              aria-selected={isSelected}
               className={cn(
-                "w-full text-left p-3 rounded-md transition-all duration-150",
-                "result-item",
-                isSelected 
-                  ? "bg-secondary border-l-4 border-l-primary" 
-                  : "hover:bg-muted/50 border-l-4 border-l-transparent"
+                'interactive w-full text-left px-2.5 py-2.5 rounded-md border border-transparent',
+                isSelected && 'is-selected'
               )}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2.5">
                 <div className={cn(
-                  "p-1.5 rounded",
-                  isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                  'mt-0.5 p-1.5 rounded-md shrink-0',
+                  isSelected ? 'bg-primary/15 text-primary' : 'bg-surface-glass-elevated/60 text-text-muted'
                 )}>
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={cn(
-                      "font-semibold",
-                      isSelected ? "text-primary" : "text-foreground"
+                      'text-sm',
+                      isSelected ? 'text-foreground text-display' : 'text-text-secondary text-label'
                     )}>
                       {result.passage.displayReference}
                     </span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded text-text-muted bg-surface-glass-elevated/50">
                       {matchTypeLabels[result.matchType]}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1 font-scripture">
+                  <p className={cn(
+                    'text-xs line-clamp-2 mt-1 scripture-text leading-snug',
+                    isSelected ? 'text-text-secondary' : 'text-text-muted'
+                  )}>
                     {result.passage.text}
                   </p>
                 </div>
@@ -80,3 +82,4 @@ export function ResultsList({ results, selectedIndex, onSelect }: ResultsListPro
     </div>
   );
 }
+
