@@ -170,13 +170,13 @@ export function PresenterPanel() {
   return (
     <div className="h-full flex flex-col">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle/10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-1 rounded bg-primary/20">
+            <div className="p-1 rounded-md bg-primary/10">
               <Monitor className="h-3.5 w-3.5 text-primary" />
             </div>
-            <span className="text-xs font-medium text-muted-foreground">Presenter</span>
+            <span className="text-xs text-label text-text-secondary">Presenter</span>
           </div>
           <ProjectionStatus />
         </div>
@@ -184,7 +184,7 @@ export function PresenterPanel() {
           <Button
             variant={projectionLocked ? 'destructive' : 'outline'}
             size="sm"
-            className="h-6 px-2 text-xs gap-1"
+            className="h-7 px-2.5 text-xs gap-1.5 rounded-md"
             onClick={toggleProjectionLock}
             title={projectionLocked ? 'Unlock projection' : 'Lock projection'}
           >
@@ -195,7 +195,7 @@ export function PresenterPanel() {
             <Button
               variant="default"
               size="sm"
-              className="h-6 px-2 text-xs gap-1"
+              className="h-7 px-2.5 text-xs gap-1.5 rounded-md"
               onClick={projectNow}
               title="Project now (P)"
             >
@@ -212,12 +212,12 @@ export function PresenterPanel() {
               value={jumpValue}
               onChange={e => { setJumpValue(e.target.value.replace(/\D/g, '')); setJumpError(''); }}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleJump(); } }}
-              className={cn('h-6 w-16 text-xs text-center', jumpError && 'border-destructive')}
+              className={cn('glass-subtle interactive h-7 w-16 text-xs text-center rounded-md', jumpError && 'border-destructive')}
               title="Jump to verse"
             />
             {jumpError && <span className="text-[10px] text-destructive whitespace-nowrap">{jumpError}</span>}
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-text-muted tabular-nums">
             {currentSlideIndex + 1} / {projectionQueue.length}
           </span>
         </div>
@@ -226,18 +226,18 @@ export function PresenterPanel() {
       <div className="flex-1 p-4 flex flex-col gap-3 min-h-0 overflow-y-auto">
         <SlideCard slide={liveSlide} label="Live" icon={Monitor} variant="live" />
         {projectionLocked && previewSlide && previewSlide !== liveSlide && (
-          <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 p-4 flex flex-col gap-2">
+          <div className="glass rounded-lg border-dashed border-primary/25 p-4 flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Preview (not projected)</span>
+              <Eye className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] text-label uppercase tracking-[0.12em] text-primary">Preview (not projected)</span>
             </div>
-            <p className="scripture-reference text-reference text-sm mb-1">{previewSlide.reference}</p>
+            <p className="scripture-reference text-reference text-sm mb-0.5">{previewSlide.reference}</p>
             <p className="scripture-text leading-relaxed text-scripture text-lg">{previewSlide.text}</p>
           </div>
         )}
         <SlideCard slide={displayNext} label="Next" icon={SkipForward} variant="next" />
-        
       </div>
     </div>
   );
+
 }
