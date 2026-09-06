@@ -165,9 +165,10 @@ export function OperatorScreen() {
       </header>
 
       {/* Main dual-column layout */}
-      <main className="flex-1 flex min-h-0">
+      <main className="flex-1 flex min-h-0 gap-px">
         {/* Left Column - Tab-based workflow */}
-        <div className="w-[380px] shrink-0 border-r border-border-subtle flex flex-col glass-subtle rounded-none border-y-0 border-l-0">
+        <div className="w-[380px] shrink-0 flex flex-col glass-subtle rounded-none border-y-0 border-l-0 border-r-border-subtle/10">
+
           {/* Tab bar */}
           <div className="flex border-b border-border-subtle shrink-0">
             {tabs.map((tab) => {
