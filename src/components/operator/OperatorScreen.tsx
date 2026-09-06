@@ -244,7 +244,7 @@ export function OperatorScreen() {
           </ScrollArea>
 
           {/* Display Settings dropdown at bottom */}
-          <div className="border-t border-border-subtle shrink-0">
+          <div className="border-t border-border-subtle/10 shrink-0">
             <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
                 <button className="w-full flex items-center gap-1.5 px-3 py-2.5 text-xs text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
