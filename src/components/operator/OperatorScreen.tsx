@@ -170,7 +170,7 @@ export function OperatorScreen() {
         <div className="w-[380px] shrink-0 flex flex-col glass-subtle rounded-none border-y-0 border-l-0 border-r-border-subtle/10">
 
           {/* Tab bar */}
-          <div className="flex border-b border-border-subtle shrink-0">
+          <div className="flex border-b border-border-subtle/10 shrink-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -183,10 +183,10 @@ export function OperatorScreen() {
                     if (tab.id === 'plan') setPlanOpened(true);
                   }}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs text-label transition-colors border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs text-label transition-colors border-b focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
                     isActive
-                      ? 'border-primary text-primary bg-primary/[0.07]'
-                      : 'border-transparent text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated'
+                      ? 'border-primary/70 text-primary bg-primary/[0.06]'
+                      : 'border-transparent text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated/50'
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -195,6 +195,7 @@ export function OperatorScreen() {
               );
             })}
           </div>
+
 
           {/* Tab content */}
           <ScrollArea className="flex-1 min-h-0">
