@@ -125,13 +125,14 @@ export function OperatorScreen() {
               <select
                 value={currentTranslation}
                 onChange={(e) => setTranslation(e.target.value)}
-                className="px-2 py-1 rounded-lg bg-background-elevated text-text-secondary text-xs text-label border border-border-subtle outline-none cursor-pointer hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-focus [&>option]:bg-background-elevated"
+                className="interactive appearance-none pr-6 px-2.5 py-1.5 rounded-md bg-background-elevated border border-border-subtle/10 text-text-secondary text-xs text-label outline-none cursor-pointer hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus [&>option]:bg-background-elevated [&>option]:text-foreground"
                 title="Switch translation"
               >
                 {BibleRepository.getAvailableTranslations().map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
+
 
               {/* Undo button next to live indicator */}
               <Button
@@ -150,11 +151,12 @@ export function OperatorScreen() {
               </Button>
 
               {committedPassage && (
-                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">
+                <div className="glass-subtle flex items-center gap-2 px-2.5 py-1 rounded-md border-primary/20">
                   <Monitor className="h-3.5 w-3.5 text-primary" />
                   <PassageNavigation />
                 </div>
               )}
+
 
               <ProjectionControl />
             </div>
@@ -163,11 +165,12 @@ export function OperatorScreen() {
       </header>
 
       {/* Main dual-column layout */}
-      <main className="flex-1 flex min-h-0">
+      <main className="flex-1 flex min-h-0 gap-px">
         {/* Left Column - Tab-based workflow */}
-        <div className="w-[380px] shrink-0 border-r border-border-subtle flex flex-col glass-subtle rounded-none border-y-0 border-l-0">
+        <div className="w-[380px] shrink-0 flex flex-col glass-subtle rounded-none border-y-0 border-l-0 border-r-border-subtle/10">
+
           {/* Tab bar */}
-          <div className="flex border-b border-border-subtle shrink-0">
+          <div className="flex border-b border-border-subtle/10 shrink-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -180,10 +183,10 @@ export function OperatorScreen() {
                     if (tab.id === 'plan') setPlanOpened(true);
                   }}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-xs text-label transition-colors border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
+                    'flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs text-label transition-colors border-b focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
                     isActive
-                      ? 'border-primary text-primary bg-primary/[0.07]'
-                      : 'border-transparent text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated'
+                      ? 'border-primary/70 text-primary bg-primary/[0.06]'
+                      : 'border-transparent text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated/50'
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -192,6 +195,7 @@ export function OperatorScreen() {
               );
             })}
           </div>
+
 
           {/* Tab content */}
           <ScrollArea className="flex-1 min-h-0">
@@ -240,7 +244,7 @@ export function OperatorScreen() {
           </ScrollArea>
 
           {/* Display Settings dropdown at bottom */}
-          <div className="border-t border-border-subtle shrink-0">
+          <div className="border-t border-border-subtle/10 shrink-0">
             <Popover onOpenChange={(open) => { if (open) setSettingsOpened(true); }}>
               <PopoverTrigger asChild>
                 <button className="w-full flex items-center gap-1.5 px-3 py-2.5 text-xs text-text-secondary hover:text-foreground hover:bg-surface-glass-elevated transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
