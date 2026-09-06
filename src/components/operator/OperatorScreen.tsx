@@ -151,11 +151,12 @@ export function OperatorScreen() {
               </Button>
 
               {committedPassage && (
-                <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-primary/10 border border-primary/20">
+                <div className="glass-subtle flex items-center gap-2 px-2.5 py-1 rounded-md border-primary/20">
                   <Monitor className="h-3.5 w-3.5 text-primary" />
                   <PassageNavigation />
                 </div>
               )}
+
 
               <ProjectionControl />
             </div>
