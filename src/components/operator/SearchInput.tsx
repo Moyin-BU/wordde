@@ -152,8 +152,8 @@ export function SearchInput({
         className={cn(
           'glass interactive h-11 pl-10 pr-10 text-sm rounded-lg',
           'text-foreground placeholder:text-text-muted/80',
-          'focus-visible:ring-2 focus-visible:ring-focus/70 focus-visible:ring-offset-0',
-          'focus-visible:border-primary/40'
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-focus/50 focus-visible:ring-offset-0',
+          'focus-visible:border-primary/30'
         )}
         autoComplete="off"
         spellCheck={false}
